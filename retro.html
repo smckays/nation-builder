@@ -647,6 +647,8 @@ async function main(){
       hud(NU,`YEAR ${cr.year}`); setScene(crisisScene(cr)); card(`YEAR ${cr.year} · ${cr.type.toUpperCase()}`,cr.title.toUpperCase()); sfx.sting();
       const ps=paras(T(cr.story(h)));
       for(let pi=0;pi<ps.length;pi++){ await sayLong(ps[pi],{title:pi===0?cr.title:'',big:pi===0}); if(!alive()) return; }
+      const v=cr.voice&&cr.voice(h);
+      if(v){ await page({speaker:v.r,text:'"'+T(v.q)+'"'}); if(!alive()) return; }
       let i;
       while(true){
         i=await page({title:`HOW DOES ${NU} RESPOND?`,after:`<div class="dim">${T(cr.cause(h))}</div><div class="credit">${cr.insp}</div>`,options:cr.choices.map(c=>T(c.l))}); if(!alive()) return;

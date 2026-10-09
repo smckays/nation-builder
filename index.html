@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nation Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a18;
+  --ink-2: #3d3d38;
+  --ink-3: #6b6b63;
+  --ink-4: #8a8a80;
+  --paper: #f5f2eb;
+  --paper-2: #ece8de;
+  --paper-3: #e2ddd1;
+  --rule: rgba(26,26,24,0.1);
+  --rule-strong: rgba(26,26,24,0.22);
+  --warn: #7a3218;
+  --good: #2f4a2a;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --ease: cubic-bezier(0.25,0.1,0.25,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-weight:300;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5;}
+svg.ico{color:var(--ink);}
+
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+.btn-primary{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--paper);background:var(--ink);border:none;padding:.875rem 2.25rem;cursor:pointer;transition:opacity .2s;}
+.btn-primary:hover{opacity:.72;}
+.btn-ghost{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);background:none;border:1px solid var(--rule-strong);padding:.625rem 1.5rem;cursor:pointer;transition:all .2s;}
+.btn-ghost:hover,.btn-ghost.on{color:var(--ink);border-color:var(--ink);}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-4);margin-bottom:.5rem;}
+.wrap{max-width:680px;width:100%;margin:0 auto;animation:fadeUp .8s var(--ease) both;}
+.center{align-items:center;justify-content:center;padding:3.5rem 1.5rem;}
+
+/* intro */
+#screen-intro{text-align:center;position:relative;}
+#screen-intro::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 47px,var(--rule) 47px,var(--rule) 48px);pointer-events:none;opacity:.35;}
+.intro-inner{max-width:520px;animation:fadeUp 1s var(--ease) both;position:relative;z-index:1;}
+.intro-ornament{font-family:var(--serif);font-size:2rem;color:var(--ink-4);margin-bottom:1rem;}
+.intro-title{font-family:var(--serif);font-size:clamp(3.2rem,9vw,5.8rem);font-weight:500;line-height:.95;letter-spacing:-.025em;margin-bottom:1rem;}
+.intro-rule{width:40px;height:1px;background:var(--ink);margin:.75rem auto 1.25rem;}
+.intro-subtitle{font-family:var(--serif);font-style:italic;font-size:clamp(1rem,2.5vw,1.25rem);color:var(--ink-2);margin-bottom:1rem;}
+.intro-body{font-size:.85rem;color:var(--ink-3);max-width:400px;margin:0 auto 2.5rem;line-height:1.9;}
+
+/* nation */
+.nation-header{display:flex;align-items:flex-start;gap:2rem;border-bottom:1px solid var(--rule-strong);padding-bottom:1.75rem;margin-bottom:1.75rem;}
+.nation-header>div{flex:1;}
+.nation-name{font-family:var(--serif);font-size:clamp(2.4rem,6vw,4rem);font-weight:500;line-height:1;letter-spacing:-.02em;}
+.nation-desc{font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--ink-2);margin-top:.35rem;}
+.geo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--rule-strong);border:1px solid var(--rule-strong);margin-bottom:1.75rem;}
+.geo-item{background:var(--paper);padding:.875rem 1rem;}
+.geo-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);margin-bottom:.2rem;}
+.geo-value{font-size:.85rem;line-height:1.4;}
+.family-card{border:1px solid var(--rule-strong);padding:1.5rem;margin-bottom:1.75rem;position:relative;}
+.family-card::before{content:'The Family';font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-4);position:absolute;top:-.6rem;left:1rem;background:var(--paper);padding:0 .5rem;}
+.family-members{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1.25rem;}
+.family-member{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.4rem;}
+.member-name{font-family:var(--serif);font-size:1.05rem;font-weight:500;}
+.member-role{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);}
+.member-desc{font-size:.78rem;color:var(--ink-3);line-height:1.6;}
+.preamble{font-family:var(--serif);font-size:1.05rem;color:var(--ink-2);line-height:1.85;margin-bottom:1.75rem;padding:1.125rem 1.375rem;border-left:2px solid var(--ink);}
+
+/* question */
+.q-layout{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;}
+.q-left{padding:2.5rem;border-right:1px solid var(--rule-strong);display:flex;flex-direction:column;}
+.q-right{padding:2.5rem;display:flex;flex-direction:column;gap:1rem;}
+.q-meta{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-4);margin-bottom:1.25rem;display:flex;gap:1.5rem;flex-wrap:wrap;}
+.q-progress-bar{height:1px;background:var(--rule-strong);margin-bottom:1.75rem;position:relative;}
+.q-progress-fill{position:absolute;top:0;left:0;height:100%;background:var(--ink);transition:width .5s var(--ease);}
+.q-domain-mark{display:flex;align-items:center;gap:.875rem;margin-bottom:1.25rem;}
+.q-domain-icon{width:36px;height:36px;flex-shrink:0;opacity:.6;}
+.q-category{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);}
+.q-text{font-family:var(--serif);font-size:clamp(1.5rem,2.8vw,2.1rem);font-weight:500;line-height:1.2;letter-spacing:-.01em;margin-bottom:1.25rem;}
+.q-context{font-size:.85rem;color:var(--ink-3);line-height:1.85;margin-bottom:1rem;}
+.q-geo{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--ink-2);line-height:1.7;margin-bottom:1.25rem;}
+.q-geo b{font-family:var(--mono);font-style:normal;font-weight:400;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);display:block;margin-bottom:.2rem;}
+.family-witness{background:var(--paper-2);border:1px solid var(--rule-strong);padding:1rem 1.125rem;position:relative;margin-top:auto;}
+.family-witness::before{content:'';position:absolute;inset:4px;border:1px solid var(--rule);pointer-events:none;}
+.witness-quote{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--ink-2);line-height:1.75;}
+.witness-name{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-4);margin-top:.5rem;}
+.q-nav{display:flex;align-items:center;gap:1rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--rule);}
+.q-nav .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-4);flex:1;}
+
+.choices-list{display:flex;flex-direction:column;gap:.625rem;}
+.choice-btn{text-align:left;background:var(--paper);border:1px solid var(--rule-strong);padding:1rem 1.125rem;cursor:pointer;transition:all .2s;position:relative;font:inherit;color:inherit;width:100%;}
+.choice-btn:hover:not(:disabled){border-color:var(--ink);background:var(--paper-2);}
+.choice-btn.selected{border-color:var(--ink);background:var(--paper-2);}
+.choice-btn.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ink);}
+.choice-btn:disabled{cursor:default;}
+.choice-btn:disabled:not(.selected){opacity:.4;}
+.choice-key{font-family:var(--mono);font-size:9px;color:var(--ink-4);margin-right:.5rem;}
+.choice-label{font-size:.9rem;font-weight:500;line-height:1.4;}
+.choice-cost{font-size:.8rem;color:var(--ink-3);line-height:1.6;margin-top:.3rem;display:none;}
+.family-impact{font-size:.88rem;color:var(--warn);font-style:italic;margin-top:.4rem;display:none;font-family:var(--serif);line-height:1.55;}
+.choice-btn.selected .choice-cost,.choice-btn.selected .family-impact{display:block;}
+@media (hover:hover){.choice-btn:hover:not(:disabled) .choice-cost,.choice-btn:hover:not(:disabled) .family-impact{display:block;}}
+.echo{margin-top:.875rem;padding:.875rem 1rem;background:var(--paper-2);border-left:2px solid var(--ink-4);font-size:.82rem;color:var(--ink-2);line-height:1.75;display:none;animation:fadeUp .3s var(--ease) both;}
+.echo.show{display:block;}
+.echo-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);margin-bottom:.3rem;}
+
+/* crisis */
+.crisis-top{display:flex;align-items:flex-start;gap:1.5rem;margin-bottom:1.75rem;}
+.crisis-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--warn);margin-bottom:.5rem;}
+.crisis-title{font-family:var(--serif);font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:500;line-height:1.1;letter-spacing:-.02em;}
+.crisis-year{font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.1em;margin-top:.375rem;}
+.story{font-family:var(--serif);font-size:1.12rem;line-height:1.95;color:var(--ink);}
+.story p+p{margin-top:1.1em;}
+.crisis-story{margin-bottom:1.75rem;padding-bottom:1.75rem;border-bottom:1px solid var(--rule-strong);}
+.crisis-cause{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.5rem;line-height:1.7;}
+.crisis-insp{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--ink-4);margin-bottom:1.5rem;line-height:1.7;}
+.label-sm{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.875rem;}
+.commit-row{margin-top:1.25rem;display:none;}
+.commit-row.show{display:block;}
+.aftermath{margin-top:1.75rem;padding:1.375rem 1.5rem;border:1px solid var(--ink);display:none;animation:fadeUp .5s var(--ease) both;}
+.aftermath.show{display:block;}
+.aftermath .story{font-size:1.08rem;}
+.aftermath .fam{font-family:var(--serif);font-style:italic;color:var(--warn);font-size:1.05rem;line-height:1.75;margin-top:.875rem;}
+.aftermath .btn-primary{margin-top:1.25rem;}
+
+/* interlude + ledger */
+.int-title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);font-weight:500;line-height:1.05;letter-spacing:-.02em;margin-bottom:1.25rem;}
+.section{margin-top:2rem;}
+.section-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);padding-bottom:.5rem;border-bottom:1px solid var(--rule-strong);margin-bottom:1rem;}
+.ledger{display:grid;gap:.75rem;}
+.ledger-row{display:grid;grid-template-columns:7.5rem 1fr 8.5rem;align-items:center;gap:1rem;}
+.ledger-name{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);}
+.ledger-bar{height:7px;border:1px solid var(--rule-strong);position:relative;}
+.ledger-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);opacity:.75;transition:width .8s var(--ease);}
+.ledger-bar u{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--warn);}
+.ledger-word{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--ink-2);}
+.delta{font-family:var(--mono);font-style:normal;font-size:9px;margin-left:.35rem;}
+.delta.up{color:var(--good);} .delta.down{color:var(--warn);}
+.faults{list-style:none;}
+.faults li{font-family:var(--serif);font-size:1.05rem;line-height:1.7;padding:.5rem 0 .5rem 1.5rem;position:relative;color:var(--ink-2);}
+.faults li::before{content:'⟋';position:absolute;left:0;color:var(--warn);font-family:var(--mono);}
+.vignettes p{font-family:var(--serif);font-size:1.05rem;line-height:1.8;color:var(--ink-2);margin-bottom:.75rem;}
+.vignettes b{font-weight:600;color:var(--ink);}
+.int-actions{margin-top:2.5rem;}
+
+/* epilogue */
+.ep-nation-title{font-family:var(--serif);font-size:clamp(1.9rem,4.5vw,2.9rem);font-weight:500;line-height:1.1;letter-spacing:-.02em;}
+.ep-divider{width:40px;height:1px;background:var(--ink);margin:1.5rem 0;}
+.fate{margin-bottom:1.75rem;}
+.fate-name{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-4);margin-bottom:.35rem;}
+.ep-question{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.8vw,1.75rem);line-height:1.4;margin:2.5rem 0;padding:1.375rem 0;border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule-strong);}
+.tabs{display:flex;gap:.5rem;margin:2rem 0 1.5rem;flex-wrap:wrap;}
+.record-item{display:grid;grid-template-columns:6.5rem 1fr;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--rule);}
+.record-k{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);padding-top:.25rem;}
+.record-v{font-family:var(--serif);font-size:1rem;color:var(--ink-2);line-height:1.5;}
+.record-v small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--ink-4);}
+.actions{display:flex;gap:1rem;flex-wrap:wrap;}
+
+@media(max-width:720px){
+  .q-layout{grid-template-columns:1fr;min-height:0;}
+  .q-left{border-right:none;border-bottom:1px solid var(--rule-strong);padding:1.75rem 1rem;}
+  .q-right{padding:1.75rem 1rem 3rem;}
+  .nation-header{flex-direction:column-reverse;gap:1rem;}
+  .crisis-top{flex-direction:column;gap:.75rem;}
+  .center{padding:2.5rem 1rem;}
+  .ledger-row{grid-template-columns:1fr 1fr;gap:.25rem .75rem;}
+  .ledger-bar{grid-column:1 / -1;order:3;}
+  .record-item{grid-template-columns:1fr;gap:.1rem;}
+}
+</style>
+</head>
+<body>
+
+<div id="screen-intro" class="screen active center">
+  <div class="intro-inner">
+    <div class="intro-ornament">✦</div>
+    <h1 class="intro-title">Nation<br>Builder</h1>
+    <div class="intro-rule"></div>
+    <p class="intro-subtitle">What does it take to build a prosperous nation?</p>
+    <p class="intro-body">Independence has been won. The old order is gone. Who holds power, how people eat, how disputes are settled — all of it is now yours to decide. You will follow one family across fifty years, through the consequences of every choice you make.</p>
+    <button class="btn-primary" onclick="startGame()">Begin the founding</button>
+  </div>
+</div>
+
+<div id="screen-nation" class="screen center">
+  <div class="wrap">
+    <div class="nation-header">
+      <div>
+        <div class="eyebrow">Your nation — Year One of Independence</div>
+        <div class="nation-name" id="nation-name"></div>
+        <div class="nation-desc" id="nation-desc"></div>
+      </div>
+      <svg id="nation-icon" class="ico" width="72" height="72" viewBox="0 0 72 72" fill="none" opacity=".55"></svg>
+    </div>
+    <div class="geo-grid" id="geo-grid"></div>
+    <div class="family-card" id="family-card"></div>
+    <div class="preamble">You are among the founders. Ten questions will set the shape of the nation; fifty years will test it. The family above will live inside every choice you make.</div>
+    <button class="btn-primary" onclick="showQuestion()">Begin the founding &rarr;</button>
+  </div>
+</div>
+
+<div id="screen-question" class="screen">
+  <div class="q-layout">
+    <div class="q-left">
+      <div class="q-meta"><span id="q-num"></span><span id="q-nation"></span></div>
+      <div class="q-progress-bar"><div class="q-progress-fill" id="q-progress"></div></div>
+      <div class="q-domain-mark">
+        <svg id="q-icon" class="q-domain-icon ico" viewBox="0 0 36 36" fill="none"></svg>
+        <span class="q-category" id="q-cat"></span>
+      </div>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-context" id="q-ctx"></div>
+      <div class="q-geo" id="q-geo"></div>
+      <div class="family-witness" id="q-witness"></div>
+      <div class="q-nav">
+        <div class="lbl" id="q-lbl"></div>
+        <button class="btn-ghost" id="btn-back" onclick="prevQuestion()">← Back</button>
+        <button class="btn-primary" id="btn-next" onclick="nextQuestion()" style="display:none">Continue →</button>
+      </div>
+    </div>
+    <div class="q-right">
+      <div class="choices-list" id="q-choices"></div>
+      <div class="echo" id="q-echo">
+        <div class="echo-label">What this sets in motion</div>
+        <span id="q-echo-text"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-interlude" class="screen center">
+  <div class="wrap" id="interlude-body"></div>
+</div>
+
+<div id="screen-crisis" class="screen center">
+  <div class="wrap">
+    <div class="crisis-top">
+      <svg id="crisis-icon" class="ico" width="56" height="56" viewBox="0 0 56 56" fill="none" opacity=".6"></svg>
+      <div>
+        <div class="crisis-eyebrow" id="crisis-type"></div>
+        <div class="crisis-title" id="crisis-title"></div>
+        <div class="crisis-year" id="crisis-year"></div>
+      </div>
+    </div>
+    <div class="story crisis-story" id="crisis-story"></div>
+    <div class="crisis-cause" id="crisis-cause"></div>
+    <div class="crisis-insp" id="crisis-insp"></div>
+    <div class="label-sm">How does your nation respond?</div>
+    <div class="choices-list" id="crisis-choices"></div>
+    <div class="commit-row" id="crisis-commit"><button class="btn-primary" onclick="commitCrisis()">Decide →</button></div>
+    <div class="aftermath" id="crisis-after"></div>
+  </div>
+</div>
+
+<div id="screen-epilogue" class="screen center">
+  <div class="wrap" id="epilogue-body"></div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// ICONS (woodcut line art; currentColor so they follow --ink)
+// ═══════════════════════════════════════════════════════════
+const S = 'stroke="currentColor"';
+const ICONS = {
+  coastal:`<path d="M8 52 Q18 40 28 48 Q38 56 48 44" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M4 44 Q14 32 24 40 Q34 48 44 36 Q54 24 64 32" ${S} stroke-width="1" stroke-linecap="round" opacity=".5"/><path d="M36 20 L36 8 M28 14 L44 14" ${S} stroke-width="1.5" stroke-linecap="round"/><circle cx="36" cy="8" r="2" fill="currentColor"/>`,
+  landlocked:`<path d="M16 52 L8 36 L20 20 L36 16 L52 24 L56 40 L44 54 Z" ${S} stroke-width="1.5"/><path d="M20 36 Q28 28 36 36 Q44 44 52 36" ${S} stroke-width="1" stroke-linecap="round" opacity=".5"/><path d="M28 52 L28 24 M20 32 L36 32" ${S} stroke-width="1" stroke-linecap="round" opacity=".4"/>`,
+  island:`<ellipse cx="36" cy="36" rx="20" ry="12" ${S} stroke-width="1.5"/><path d="M12 36 Q20 28 28 36 Q36 44 44 36 Q52 28 60 36" ${S} stroke-width="1" stroke-linecap="round" opacity=".4"/><path d="M36 24 L36 12 M30 18 L42 18" ${S} stroke-width="1.5" stroke-linecap="round"/>`,
+  plains:`<path d="M4 44 L68 44" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M4 52 L68 52" ${S} stroke-width=".75" opacity=".4"/><path d="M20 44 L20 20 L28 12 L36 20 L44 8 L52 20 L52 44" ${S} stroke-width="1.25" stroke-linejoin="round"/>`,
+  arid:`<circle cx="36" cy="20" r="8" ${S} stroke-width="1.5"/><path d="M36 6 L36 2 M24 10 L21 7 M48 10 L51 7" ${S} stroke-width="1.2" stroke-linecap="round"/><path d="M4 50 Q20 38 36 46 Q52 54 68 42" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M10 58 Q30 50 50 56" ${S} stroke-width="1" opacity=".4"/>`,
+  power:`<path d="M18 28 L18 8 L28 4 L28 28" ${S} stroke-width="1.5" stroke-linejoin="round"/><rect x="8" y="28" width="20" height="4" fill="currentColor" opacity=".7"/><rect x="4" y="32" width="28" height="2" fill="currentColor" opacity=".4"/>`,
+  economy:`<circle cx="18" cy="16" r="10" ${S} stroke-width="1.5"/><path d="M18 8 L18 24 M12 12 L24 20 M24 12 L12 20" ${S} stroke-width="1" opacity=".5"/><path d="M8 30 L28 30 L24 35 L12 35 Z" ${S} stroke-width="1.2"/>`,
+  rights:`<rect x="6" y="4" width="20" height="28" ${S} stroke-width="1.5"/><path d="M10 10 L22 10 M10 15 L22 15 M10 20 L18 20" ${S} stroke-width="1" opacity=".6"/><path d="M20 24 L30 33" ${S} stroke-width="1.5" stroke-linecap="round"/>`,
+  citizenship:`<circle cx="18" cy="10" r="5" ${S} stroke-width="1.5"/><path d="M8 28 C8 20 28 20 28 28" ${S} stroke-width="1.5"/><path d="M4 33 L32 33" ${S} stroke-width="1" opacity=".5"/>`,
+  justice:`<path d="M18 4 L18 32 M8 10 L28 10" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M8 10 L4 22 L12 22 Z M28 10 L24 22 L32 22 Z" ${S} stroke-width="1"/><path d="M10 32 L26 32" ${S} stroke-width="1.2" opacity=".5"/>`,
+  labor:`<path d="M6 32 L14 8 L18 16 L22 4 L26 16 L30 8 L34 32 Z" ${S} stroke-width="1.4" stroke-linejoin="round"/><path d="M4 32 L36 32" ${S} stroke-width="1.5"/>`,
+  religion:`<path d="M18 4 L18 30 M10 12 L26 12" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M8 28 Q18 20 28 28" ${S} stroke-width="1" opacity=".5"/>`,
+  trade:`<path d="M4 20 L16 8 L28 20" ${S} stroke-width="1.5" stroke-linejoin="round"/><path d="M10 20 L10 34" ${S} stroke-width="1.5"/><path d="M20 28 L32 16 L32 34 L20 34 Z" ${S} stroke-width="1.2"/>`,
+  education:`<rect x="6" y="12" width="24" height="20" ${S} stroke-width="1.5"/><path d="M2 12 L18 4 L34 12" ${S} stroke-width="1.4" stroke-linejoin="round"/><path d="M13 32 L13 20 L23 20 L23 32" ${S} stroke-width="1" opacity=".6"/>`,
+  accountability:`<circle cx="18" cy="18" r="14" ${S} stroke-width="1.5"/><path d="M18 10 L18 18 L24 24" ${S} stroke-width="1.5" stroke-linecap="round"/><circle cx="18" cy="18" r="2" fill="currentColor"/>`,
+  drought:`<circle cx="28" cy="18" r="8" ${S} stroke-width="1.5"/><path d="M28 6 L28 2 M18 10 L15 7 M38 10 L41 7" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M8 38 Q18 30 28 38 Q38 46 48 38" ${S} stroke-width="1.5"/><path d="M14 46 L18 50 M30 46 L26 52 M40 46 L44 50" ${S} stroke-width="1" opacity=".5"/>`,
+  revolt:`<path d="M8 48 L20 16 L28 28 L36 8 L44 48" ${S} stroke-width="1.5" stroke-linejoin="round"/><path d="M4 48 L52 48" ${S} stroke-width="1.5"/>`,
+  plague:`<path d="M28 8 C18 8 12 16 12 28 C12 40 20 48 28 48 C36 48 44 40 44 28 C44 16 38 8 28 8 Z" ${S} stroke-width="1.5"/><path d="M22 22 L34 34 M34 22 L22 34" ${S} stroke-width="1.5" opacity=".5"/>`,
+  wardebt:`<path d="M8 44 L28 8 L48 44 Z" ${S} stroke-width="1.5"/><path d="M18 44 L18 28 L38 28 L38 44" ${S} stroke-width="1" opacity=".5"/>`,
+  corruption:`<path d="M8 36 C8 20 20 12 28 12 C36 12 44 20 44 28" ${S} stroke-width="1.5"/><path d="M36 36 L44 28 L52 36" ${S} stroke-width="1.5"/><circle cx="28" cy="28" r="3" ${S} stroke-width="1"/>`,
+  nativism:`<circle cx="20" cy="20" r="8" ${S} stroke-width="1.5"/><path d="M36 12 L48 24 M48 12 L36 24" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M12 38 Q28 30 44 38" ${S} stroke-width="1" opacity=".5"/>`,
+  road:`<path d="M4 48 L22 8 M52 48 L34 8" ${S} stroke-width="1.5"/><path d="M28 44 L28 38 M28 30 L28 24 M28 16 L28 12" ${S} stroke-width="1.2" opacity=".5"/><path d="M12 30 L44 30" ${S} stroke-width="2.5"/>`,
+  stakes:`<path d="M10 48 L10 20 M28 48 L28 14 M46 48 L46 20" ${S} stroke-width="1.5" stroke-linecap="round"/><path d="M10 24 L28 18 L46 24" ${S} stroke-width="1" stroke-dasharray="2 3"/><path d="M4 48 L52 48" ${S} stroke-width="1.2" opacity=".5"/>`,
+  flood:`<path d="M14 30 L14 18 L24 10 L34 18 L34 30" ${S} stroke-width="1.4"/><path d="M4 34 Q12 28 20 34 Q28 40 36 34 Q44 28 52 34" ${S} stroke-width="1.5"/><path d="M4 44 Q12 38 20 44 Q28 50 36 44 Q44 38 52 44" ${S} stroke-width="1" opacity=".5"/>`,
+  strike:`<rect x="8" y="20" width="40" height="26" ${S} stroke-width="1.5"/><path d="M14 20 L14 8 L22 8 L22 20" ${S} stroke-width="1.2"/><path d="M20 30 L36 40 M36 30 L20 40" ${S} stroke-width="1.5" opacity=".6"/>`,
+  seat:`<path d="M16 48 L16 20 Q28 10 40 20 L40 48" ${S} stroke-width="1.5"/><path d="M12 34 L44 34" ${S} stroke-width="1.5"/><path d="M22 12 L28 4 L34 12" ${S} stroke-width="1.2" opacity=".6"/>`,
+  march:`<circle cx="14" cy="16" r="4" ${S} stroke-width="1.3"/><circle cx="28" cy="14" r="4" ${S} stroke-width="1.3"/><circle cx="42" cy="16" r="4" ${S} stroke-width="1.3"/><path d="M8 40 L14 24 L20 40 M22 40 L28 22 L34 40 M36 40 L42 24 L48 40" ${S} stroke-width="1.3"/><path d="M4 46 L52 46" ${S} stroke-width="1" opacity=".5"/>`,
+  press:`<rect x="10" y="8" width="36" height="40" ${S} stroke-width="1.5"/><path d="M16 16 L40 16 M16 22 L40 22 M16 28 L34 28 M16 34 L40 34" ${S} stroke-width="1" opacity=".6"/>`,
+  tariff:`<path d="M28 6 L28 50 M10 14 L46 14" ${S} stroke-width="1.5"/><path d="M10 14 L4 30 L16 30 Z M46 14 L40 30 L52 30 Z" ${S} stroke-width="1.2"/><path d="M18 50 L38 50" ${S} stroke-width="1.5"/>`,
+  hourglass:`<path d="M12 4 L44 4 L44 8 L28 28 L44 48 L44 52 L12 52 L12 48 L28 28 L12 8 Z" ${S} stroke-width="1.5" stroke-linejoin="round"/><path d="M20 38 Q28 34 36 38" ${S} stroke-width="1" opacity=".5"/>`
+};
+const PORTRAITS = {
+  F:`<svg class="ico" width="56" height="70" viewBox="0 0 64 80" fill="none" opacity=".65"><circle cx="32" cy="14" r="10" ${S} stroke-width="1.5"/><path d="M14 72 L14 40 C14 32 50 32 50 40 L50 72" ${S} stroke-width="1.5"/><path d="M14 50 L8 64 M50 50 L56 64" ${S} stroke-width="1.2"/></svg>`,
+  M:`<svg class="ico" width="56" height="70" viewBox="0 0 64 80" fill="none" opacity=".65"><circle cx="32" cy="14" r="9" ${S} stroke-width="1.5"/><path d="M18 40 C16 56 16 68 20 72 L44 72 C48 68 48 56 46 40 C40 36 24 36 18 40 Z" ${S} stroke-width="1.5"/><path d="M18 40 L10 60 M46 40 L54 60" ${S} stroke-width="1.2"/></svg>`,
+  S:`<svg class="ico" width="50" height="64" viewBox="0 0 56 72" fill="none" opacity=".65"><circle cx="28" cy="12" r="8" ${S} stroke-width="1.5"/><path d="M12 64 L12 36 C12 28 44 28 44 36 L44 64" ${S} stroke-width="1.5"/><path d="M12 44 L6 58 M44 44 L50 58" ${S} stroke-width="1.2"/></svg>`,
+  D:`<svg class="ico" width="44" height="58" viewBox="0 0 48 64" fill="none" opacity=".65"><circle cx="24" cy="10" r="7" ${S} stroke-width="1.5"/><path d="M10 60 C10 44 14 32 24 30 C34 32 38 44 38 60" ${S} stroke-width="1.5"/><path d="M10 44 L4 56 M38 44 L44 56" ${S} stroke-width="1.2"/></svg>`
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE + HELPERS
+// ═══════════════════════════════════════════════════════════
+let state;
+const $ = id => document.getElementById(id);
+
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $('screen-'+id).classList.add('active'); window.scrollTo(0,0); }
+function setIcon(el, key, vb){ el.setAttribute('viewBox', vb); el.innerHTML = ICONS[key]||''; }
+
+// ═══════════════════════════════════════════════════════════
+// FLOW
+// ═══════════════════════════════════════════════════════════
+function startGame(){
+  state = newState(rnd(NATIONS), rnd(FAMILIES));
+  renderNation(); showScreen('nation');
+}
+
+function renderNation(){
+  const n=state.nation, f=state.family;
+  $('nation-name').textContent=n.name; $('nation-desc').textContent=n.desc;
+  setIcon($('nation-icon'), n.icon, "0 0 72 72");
+  $('geo-grid').innerHTML = Object.entries(n.geo).map(([k,v])=>`<div class="geo-item"><div class="geo-label">${k}</div><div class="geo-value">${v}</div></div>`).join('');
+  $('family-card').innerHTML = `<div class="family-members">${f.members.map((m,i)=>`
+    <div class="family-member">${PORTRAITS["FMSD"[i]]}
+      <div class="member-name">${m.name} ${f.surname}</div>
+      <div class="member-role">${m.role} · ${m.age}</div>
+      <div class="member-desc">${m.desc}</div></div>`).join('')}</div>`;
+}
+
+// ── founding questions ──
+function showQuestion(){ state.phase="question"; renderQuestion(); showScreen('question'); }
+function renderQuestion(){
+  const q=QUESTIONS[state.qi], tot=QUESTIONS.length;
+  $('q-num').textContent=`The Founding · ${state.qi+1} of ${tot}`;
+  $('q-nation').textContent=state.nation.name;
+  $('q-lbl').textContent=`${state.nation.name} · the ${state.family.surname} family`;
+  $('q-progress').style.width=((state.qi/tot)*100)+'%';
+  $('q-cat').textContent=q.cat; $('q-text').textContent=q.title; $('q-ctx').textContent=T(q.ctx);
+  setIcon($('q-icon'), q.icon, "0 0 36 36");
+  const tag = state.nation.tags.find(t=>q.geo&&q.geo[t]);
+  $('q-geo').innerHTML = tag ? `<b>In ${state.nation.name}</b>${T(q.geo[tag])}` : '';
+  const w=q.witness;
+  $('q-witness').innerHTML=`<div class="witness-quote">"${T(w.q)}"</div><div class="witness-name">— ${first(w.r)} ${state.family.surname}, ${ageAt(w.r,1)}</div>`;
+  $('btn-back').style.display = state.qi===0?'none':'';
+  const cur=state.answers[state.qi];
+  $('q-choices').innerHTML=q.choices.map((c,i)=>`
+    <button class="choice-btn ${cur===i?'selected':''}" onclick="selectChoice(${i})">
+      <div class="choice-label"><span class="choice-key">${i+1}</span>${c.l}</div>
+      <div class="choice-cost">${T(c.c)}</div>
+      <div class="family-impact">${T(c.fi)}</div>
+    </button>`).join('');
+  updateEcho();
+}
+function updateEcho(){
+  const cur=state.answers[state.qi], q=QUESTIONS[state.qi];
+  $('btn-next').style.display = cur===undefined?'none':'';
+  $('btn-next').textContent = state.qi===QUESTIONS.length-1 ? 'Ratify the founding →' : 'Continue →';
+  $('q-echo').classList.toggle('show', cur!==undefined);
+  if(cur!==undefined) $('q-echo-text').textContent=T(q.choices[cur].x);
+}
+function selectChoice(i){
+  state.answers[state.qi]=i;
+  document.querySelectorAll('#q-choices .choice-btn').forEach((b,j)=>b.classList.toggle('selected',j===i));
+  updateEcho();
+}
+function nextQuestion(){
+  if(state.answers[state.qi]===undefined) return;
+  if(state.qi<QUESTIONS.length-1){ state.qi++; renderQuestion(); window.scrollTo(0,0); }
+  else ratify();
+}
+function prevQuestion(){ if(state.qi>0){ state.qi--; renderQuestion(); } }
+
+// ── ratify: compute the nation from all answers (so Back works freely) ──
+function ratify(){ ratifyState(); showFaultLines(); }
+
+// ═══════════════════════════════════════════════════════════
+// INTERLUDES
+// ═══════════════════════════════════════════════════════════
+function ledgerHTML(prev){
+  return `<div class="ledger">${METERS.map(mt=>{
+    const v=state.m[mt.k], p=prev?prev[mt.k]:null, d=p==null?0:v-p;
+    return `<div class="ledger-row">
+      <div class="ledger-name">${mt.n}</div>
+      <div class="ledger-bar"><i style="width:${v}%"></i>${p!=null&&d!==0?`<u style="left:${p}%"></u>`:''}</div>
+      <div class="ledger-word">${word(mt,v)}${d?`<span class="delta ${d>0?'up':'down'}">${d>0?'▲':'▼'}${Math.abs(d)}</span>`:''}</div>
+    </div>`;}).join('')}</div>`;
+}
+function showFaultLines(){
+  state.phase="faults";
+  const faults=activeFaults();
+  $('interlude-body').innerHTML = `
+    <div class="eyebrow">${state.nation.name} · Year One · The founding is ratified</div>
+    <div class="int-title">What you have made</div>
+    <div class="story"><p>${foundingSentence()}</p></div>
+    <div class="section"><div class="section-h">The state of the nation</div>${ledgerHTML(null)}</div>
+    <div class="section"><div class="section-h">Fault lines written into the founding</div>
+      ${faults.length?`<ul class="faults">${faults.slice(0,5).map(t=>`<li>${t}</li>`).join('')}</ul>`:`<div class="story"><p>No contradiction leaps off the page. That does not mean there are none — only that they will have to be found the hard way.</p></div>`}
+    </div>
+    <div class="int-actions"><button class="btn-primary" onclick="startEra(2)">The first years →</button></div>`;
+  showScreen('interlude');
+}
+function showMidpoint(){
+  state.phase="mid"; state.year=25;
+  state.snapshots[25]={...state.m};
+  $('interlude-body').innerHTML = `
+    <div class="eyebrow">${state.nation.name} · Year 25</div>
+    <div class="int-title">A generation in</div>
+    <div class="story"><p>The founders are old men now, or gone. The children who were small at the founding are grown and have opinions of their own about what was decided on their behalf.</p></div>
+    <div class="section"><div class="section-h">The state of the nation · since Year One</div>${ledgerHTML(state.snapshots[1])}</div>
+    <div class="section"><div class="section-h">The ${state.family.surname} family</div><div class="vignettes">${["F","M","S","D"].map(r=>`<p><b>${first(r)}</b>, ${words(ageAt(r,25))}. ${T(vignette(r))}</p>`).join('')}</div></div>
+    <div class="int-actions"><button class="btn-primary" onclick="startEra(3)">The second generation →</button></div>`;
+  showScreen('interlude');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CRISES
+// ═══════════════════════════════════════════════════════════
+function startEra(era){ state.era=era; state.queue=pickCrises(era); state.ci=0; nextCrisis(); }
+function nextCrisis(){
+  if(state.ci>=state.queue.length){ return state.era===2 ? showMidpoint() : showEpilogue(); }
+  const cr=state.queue[state.ci], h=H();
+  state.used.add(cr.id); state.year=cr.year; state.pending=null; state.phase="crisis";
+  $('crisis-type').textContent=cr.type;
+  $('crisis-title').textContent=cr.title;
+  $('crisis-year').textContent=`Year ${cr.year} of ${state.nation.name} · ${state.era===2?'The first years':'The second generation'} · ${state.ci+1} of ${state.queue.length}`;
+  $('crisis-story').innerHTML=T(cr.story(h));
+  $('crisis-cause').textContent=T(cr.cause(h));
+  $('crisis-insp').textContent=cr.insp;
+  setIcon($('crisis-icon'), cr.icon, "0 0 56 56");
+  $('crisis-choices').innerHTML=cr.choices.map((c,i)=>`
+    <button class="choice-btn" onclick="selectCrisis(${i})">
+      <div class="choice-label"><span class="choice-key">${i+1}</span>${T(c.l)}</div>
+      <div class="choice-cost">${T(c.c)}</div>
+    </button>`).join('');
+  $('crisis-commit').classList.remove('show');
+  $('crisis-after').classList.remove('show');
+  showScreen('crisis');
+}
+function selectCrisis(i){
+  if(state.phase!=="crisis") return;
+  state.pending=i;
+  document.querySelectorAll('#crisis-choices .choice-btn').forEach((b,j)=>b.classList.toggle('selected',j===i));
+  $('crisis-commit').classList.add('show');
+}
+function commitCrisis(){
+  if(state.pending==null||state.phase!=="crisis") return;
+  const cr=state.queue[state.ci];
+  state.phase="aftermath";
+  const c=applyCrisisChoice(cr, state.pending);
+  document.querySelectorAll('#crisis-choices .choice-btn').forEach(b=>b.disabled=true);
+  $('crisis-commit').classList.remove('show');
+  const last = state.ci===state.queue.length-1;
+  $('crisis-after').innerHTML=`<div class="label-sm">What happened</div><div class="story"><p>${T(c.after)}</p></div><div class="fam">${T(c.fam)}</div>
+    <button class="btn-primary" onclick="state.ci++;nextCrisis()">${last?(state.era===2?'Twenty-five years on →':'Fifty years on →'):'Continue →'}</button>`;
+  $('crisis-after').classList.add('show');
+  $('crisis-after').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function showEpilogue(){
+  state.year=50; state.phase="epilogue";
+  const v=verdict(), h=H();
+  const open = FAULTS.filter(f=>f.w(h)).length;
+  $('epilogue-body').innerHTML=`
+    <div style="display:flex;gap:1.5rem;align-items:flex-start">
+      <svg class="ico" width="56" height="56" viewBox="0 0 56 56" fill="none" opacity=".55">${ICONS.hourglass}</svg>
+      <div><div class="eyebrow">The nation you built · Year 50</div><div class="ep-nation-title">${v.t}</div></div>
+    </div>
+    <div class="ep-divider"></div>
+    <div class="tabs">
+      <button class="btn-ghost on" id="tab-story" onclick="epTab('story')">The fifty years</button>
+      <button class="btn-ghost" id="tab-record" onclick="epTab('record')">The record</button>
+    </div>
+    <div id="ep-story">
+      <div class="story"><p>${v.p}</p></div>
+      <div class="section"><div class="section-h">The ${state.family.surname} family</div>
+        ${["F","M","S","D"].map(r=>`<div class="fate"><div class="fate-name">${first(r)} ${state.family.surname} · ${state.family.members[ROLE_IDX[r]].role.split(' — ')[0]}</div><div class="story"><p>${T(fate(r))}</p></div></div>`).join('')}
+      </div>
+    </div>
+    <div id="ep-record" style="display:none">
+      <div class="section-h">${state.nation.name} · the ${state.family.surname} family · ${state.family.landed?'landholders':'tenants'}</div>
+      ${state.log.map(e=>`<div class="record-item"><div class="record-k">${e.k}</div><div class="record-v">${e.t?`<small>${e.t}</small>`:''}${e.v}</div></div>`).join('')}
+      <div class="section"><div class="section-h">The nation · Year One to Year 50</div>${ledgerHTML(state.snapshots[1])}</div>
+      <div class="section"><div class="story"><p>${open} fault line${open===1?'':'s'} written into the founding. The founders could have avoided most of them on the first day, at a price they were not willing to pay.</p></div></div>
+    </div>
+    <div class="ep-question">Is this the nation you meant to make?</div>
+    <div class="actions">
+      <button class="btn-primary" onclick="startGame()">Build again</button>
+      <button class="btn-ghost" onclick="showScreen('intro')">Title</button>
+    </div>`;
+  showScreen('epilogue');
+}
+function epTab(t){
+  $('ep-story').style.display = t==='story'?'':'none';
+  $('ep-record').style.display = t==='record'?'':'none';
+  $('tab-story').classList.toggle('on', t==='story');
+  $('tab-record').classList.toggle('on', t==='record');
+}
+
+// keyboard: 1–4 choose, Enter continues
+document.addEventListener('keydown', e=>{
+  if(!state||e.metaKey||e.ctrlKey||e.altKey) return;
+  const n=parseInt(e.key,10);
+  if(state.phase==="question"){
+    if(n>=1&&n<=4) selectChoice(n-1);
+    else if(e.key==="Enter"&&state.answers[state.qi]!==undefined){ e.preventDefault(); nextQuestion(); }
+  } else if(state.phase==="crisis"){
+    const k=state.queue[state.ci].choices.length;
+    if(n>=1&&n<=k) selectCrisis(n-1);
+    else if(e.key==="Enter"&&state.pending!=null){ e.preventDefault(); commitCrisis(); }
+  } else if(state.phase==="aftermath"&&e.key==="Enter"){ e.preventDefault(); state.ci++; nextCrisis(); }
+});
+</script>
+</body>
+</html>

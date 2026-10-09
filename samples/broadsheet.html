@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Style sample: Broadsheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#efe6d2;--paper-2:#e6dbc2;--ink:#1d1a15;--ink-2:#4a4237;--rule:#1d1a15;--red:#8a2b1c;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#5b5247;font-family:'IM Fell English',Georgia,serif;color:var(--ink);padding:28px 16px 60px;}
+.sheet{max-width:980px;margin:0 auto;background:var(--paper);padding:28px 34px 36px;box-shadow:0 20px 50px rgba(0,0,0,.45);position:relative;
+  background-image:radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.35),transparent 60%),radial-gradient(ellipse at 90% 90%,rgba(120,90,40,.18),transparent 55%);}
+.sheet::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");}
+.ears{display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:.06em;border-bottom:1px solid var(--rule);padding-bottom:6px;}
+.ears .box{border:1px solid var(--rule);padding:4px 10px;text-align:center;line-height:1.3;font-family:'IM Fell English SC';}
+.mast{font-family:'UnifrakturMaguntia',serif;font-size:clamp(44px,8vw,86px);text-align:center;line-height:1;padding:10px 0 6px;}
+.dateline{display:flex;justify-content:space-between;font-family:'IM Fell English SC';font-size:13px;border-top:3px double var(--rule);border-bottom:3px double var(--rule);padding:5px 2px;margin-bottom:18px;}
+.head{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(34px,6vw,62px);line-height:.95;text-align:center;text-transform:uppercase;letter-spacing:-.01em;}
+.deck{font-style:italic;text-align:center;font-size:20px;margin:10px auto 16px;max-width:640px;color:var(--ink-2);}
+.rule-orn{text-align:center;margin:4px 0 16px;letter-spacing:.6em;color:var(--ink-2);}
+.grid{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;}
+.cols{column-count:2;column-gap:22px;column-rule:1px solid rgba(29,26,21,.35);font-size:17px;line-height:1.5;text-align:justify;hyphens:auto;}
+.cols p{margin-bottom:.7em;text-indent:1.2em;}
+.cols p:first-child{text-indent:0;}
+.cols p:first-child::first-letter{font-family:'Playfair Display';font-weight:900;float:left;font-size:58px;line-height:.85;padding:4px 6px 0 0;}
+.sub{font-family:'Playfair Display';font-weight:700;font-size:15px;text-transform:uppercase;text-align:center;letter-spacing:.05em;margin:4px 0 6px;break-after:avoid;}
+figure{border:1px solid var(--rule);padding:8px;background:var(--paper-2);}
+figure svg{width:100%;height:auto;display:block;}
+figcaption{font-style:italic;font-size:14px;text-align:center;margin-top:6px;color:var(--ink-2);}
+.letter{margin-top:16px;border-top:2px solid var(--rule);border-bottom:2px solid var(--rule);padding:12px 4px;}
+.letter h4{font-family:'IM Fell English SC';font-weight:400;font-size:15px;letter-spacing:.08em;text-align:center;margin-bottom:6px;}
+.letter p{font-style:italic;font-size:17px;line-height:1.5;}
+.letter .sig{text-align:right;font-style:normal;font-family:'IM Fell English SC';font-size:14px;margin-top:4px;}
+.ballot{margin-top:24px;border:3px double var(--rule);padding:14px 18px 18px;}
+.ballot h3{font-family:'Playfair Display';font-weight:900;text-transform:uppercase;text-align:center;font-size:22px;letter-spacing:.04em;}
+.ballot .q{text-align:center;font-style:italic;margin:2px 0 12px;color:var(--ink-2);}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.opt{border:1px solid var(--rule);padding:10px 12px 12px;cursor:pointer;background:transparent;font:inherit;color:inherit;text-align:left;transition:background .15s;}
+.opt:hover{background:rgba(29,26,21,.06);}
+.opt.on{background:var(--ink);color:var(--paper);}
+.opt .no{font-family:'IM Fell English SC';font-size:13px;letter-spacing:.1em;}
+.opt .t{font-family:'Playfair Display';font-weight:700;font-size:17px;line-height:1.15;margin:4px 0 6px;}
+.opt .c{font-size:15px;line-height:1.4;font-style:italic;}
+.opt .mark{display:inline-block;width:16px;height:16px;border:1px solid currentColor;vertical-align:-2px;margin-right:6px;text-align:center;line-height:14px;font-size:14px;}
+.cause{font-size:13px;text-align:center;margin-top:12px;color:var(--ink-2);font-family:'IM Fell English SC';letter-spacing:.04em;}
+.market{margin-top:16px;font-size:15px;}
+.market h4{font-family:'IM Fell English SC';font-weight:400;letter-spacing:.08em;text-align:center;border-bottom:1px solid var(--rule);padding-bottom:4px;margin-bottom:6px;}
+.market table{width:100%;border-collapse:collapse;}
+.market td{padding:3px 0;border-bottom:1px dotted rgba(29,26,21,.4);}
+.market td:last-child{text-align:right;font-style:italic;}
+.dn{color:var(--red);}
+.family{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;text-align:center;font-size:13px;}
+.family svg{width:100%;max-width:70px;height:auto;}
+.family b{display:block;font-family:'IM Fell English SC';font-weight:400;font-size:14px;}
+@media(max-width:760px){.sheet{padding:18px 16px 24px;}.grid{grid-template-columns:1fr;}.cols{column-count:1;}.opts{grid-template-columns:1fr;}.ears .box:last-child{display:none;}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <pattern id="h1" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="4" stroke="#1d1a15" stroke-width="1.1"/></pattern>
+    <pattern id="h2" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-25)"><line x1="0" y1="0" x2="0" y2="3" stroke="#1d1a15" stroke-width="1"/></pattern>
+    <pattern id="h3" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(10)"><line x1="0" y1="0" x2="0" y2="6" stroke="#1d1a15" stroke-width=".7"/></pattern>
+    <pattern id="xh" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0 L4 4 M4 0 L0 4" stroke="#1d1a15" stroke-width=".8"/></pattern>
+  </defs>
+</svg>
+<div class="sheet">
+  <div class="ears"><div class="box">PRICE<br>TWO PENCE</div><div style="font-style:italic">“All the news the founders did not foresee.”</div><div class="box">WEATHER<br>DRY. VERY DRY.</div></div>
+  <div class="mast">The Kemrath Gazette</div>
+  <div class="dateline"><span>Vol. XIV · No. 212</span><span>The Fourteenth Year of the Republic</span><span>Valley Edition</span></div>
+
+  <div class="head">The Wells Run Dry</div>
+  <div class="deck">No rain since April; the harvest at a quarter; relief fund spent on roads. The valley waits on the capital.</div>
+  <div class="rule-orn">❧ ❧ ❧</div>
+
+  <div class="grid">
+    <div>
+      <div class="cols">
+        <p>No rain fell from April to September. The wells went first, then the river, then everyone's patience. The harvest in the Vael holding will be a quarter of what the family needs. The ox was sold in July to pay the tax on the six acres.</p>
+        <div class="sub">A Clerk Is Sorry</div>
+        <p>Mrs. Maret Vael walked three miles to the district office to ask for relief. The clerk said the emergency fund had been spent on roads. He was sorry. He wrote the family's name in a book.</p>
+        <div class="sub">Water at a Price</div>
+        <p>The district's largest landowner has a deep well that still runs. He sells water at a price no one in the valley can pay. Young Jorin Vael, thirty, has heard of men in other districts who stopped asking politely. Your correspondent did not ask him what he meant.</p>
+      </div>
+      <div class="letter">
+        <h4>— A Letter to the Editor —</h4>
+        <p>“I have kept this household fed through three bad harvests. Land means you eat when other people don’t. I should like to know which of those we are about to become.”</p>
+        <div class="sig">— M. V., of the valley</div>
+      </div>
+    </div>
+    <div>
+      <figure>
+        <svg viewBox="0 0 400 260">
+          <rect width="400" height="260" fill="#e6dbc2"/>
+          <circle cx="300" cy="70" r="38" fill="none" stroke="#1d1a15" stroke-width="1.5"/>
+          <g stroke="#1d1a15" stroke-width="1.2">
+            <line x1="300" y1="14" x2="300" y2="24"/><line x1="300" y1="116" x2="300" y2="126"/><line x1="244" y1="70" x2="254" y2="70"/><line x1="346" y1="70" x2="356" y2="70"/>
+            <line x1="260" y1="30" x2="267" y2="37"/><line x1="333" y1="103" x2="340" y2="110"/><line x1="340" y1="30" x2="333" y2="37"/><line x1="267" y1="103" x2="260" y2="110"/>
+          </g>
+          <path d="M0 150 Q80 120 160 140 T320 130 T400 140 L400 260 L0 260 Z" fill="url(#h3)"/>
+          <path d="M0 175 Q100 160 200 172 T400 168 L400 260 L0 260 Z" fill="url(#h1)" stroke="#1d1a15" stroke-width="1.2"/>
+          <path d="M0 175 Q100 160 200 172 T400 168 L400 260 L0 260 Z" fill="#e6dbc2" opacity=".35"/>
+          <g fill="none" stroke="#1d1a15" stroke-width="1.3">
+            <path d="M30 210 l20 -6 l14 10 l22 -4"/><path d="M120 230 l18 -10 l10 12 l24 -6"/><path d="M220 200 l16 8 l22 -10 l12 6"/><path d="M290 236 l22 -8 l16 10"/><path d="M60 245 l20 -4 l8 8"/>
+          </g>
+          <g stroke="#1d1a15" fill="url(#xh)" stroke-width="1.4">
+            <path d="M70 172 L70 110 L98 88 L126 110 L126 172 Z"/>
+          </g>
+          <path d="M64 112 L98 84 L132 112" fill="none" stroke="#1d1a15" stroke-width="2.2"/>
+          <rect x="91" y="140" width="14" height="32" fill="#1d1a15"/>
+          <g stroke="#1d1a15" stroke-width="2.4" fill="none" stroke-linecap="round">
+            <path d="M190 176 L192 96"/><path d="M191 130 L168 108 L160 112"/><path d="M191 118 L214 98 L224 102"/><path d="M191 146 L206 136"/>
+          </g>
+          <g stroke="#1d1a15" stroke-width="1.6" fill="none">
+            <circle cx="250" cy="150" r="5"/><path d="M250 155 L250 180 M250 162 L240 172 M250 162 L262 156 M250 180 L244 196 M250 180 L256 196"/>
+            <path d="M262 156 L268 150 L274 158 L266 162 Z" fill="url(#h2)"/>
+          </g>
+        </svg>
+        <figcaption>The Vael holding in August, as sketched by our correspondent.</figcaption>
+      </figure>
+      <div class="family">
+        <div><svg viewBox="0 0 60 70"><ellipse cx="30" cy="38" rx="27" ry="32" fill="none" stroke="#1d1a15"/><circle cx="30" cy="28" r="9" fill="url(#h2)" stroke="#1d1a15"/><path d="M14 64 Q30 40 46 64" fill="url(#h1)" stroke="#1d1a15"/></svg><b>Aldric</b>55</div>
+        <div><svg viewBox="0 0 60 70"><ellipse cx="30" cy="38" rx="27" ry="32" fill="none" stroke="#1d1a15"/><circle cx="30" cy="28" r="9" fill="url(#h3)" stroke="#1d1a15"/><path d="M12 64 Q30 36 48 64" fill="url(#xh)" stroke="#1d1a15"/></svg><b>Maret</b>51</div>
+        <div><svg viewBox="0 0 60 70"><ellipse cx="30" cy="38" rx="27" ry="32" fill="none" stroke="#1d1a15"/><circle cx="30" cy="28" r="9" fill="none" stroke="#1d1a15"/><path d="M14 64 Q30 40 46 64" fill="url(#h2)" stroke="#1d1a15"/></svg><b>Jorin</b>30</div>
+        <div><svg viewBox="0 0 60 70"><ellipse cx="30" cy="38" rx="27" ry="32" fill="none" stroke="#1d1a15"/><circle cx="30" cy="29" r="8" fill="none" stroke="#1d1a15"/><path d="M16 64 Q30 42 44 64" fill="url(#h3)" stroke="#1d1a15"/></svg><b>Sele</b>22</div>
+      </div>
+      <div class="market">
+        <h4>State of the Republic</h4>
+        <table>
+          <tr><td>Prosperity</td><td>Comfortable</td></tr>
+          <tr><td>Equality</td><td class="dn">Unequal ▾</td></tr>
+          <tr><td>Belonging</td><td>Most are inside</td></tr>
+          <tr><td>Legitimacy</td><td>Accepted</td></tr>
+          <tr><td>Institutions</td><td class="dn">Personal ▾</td></tr>
+          <tr><td>Cohesion</td><td>Holding</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="ballot">
+    <h3>The Government Must Choose</h3>
+    <div class="q">How does Kemrath respond? Mark one.</div>
+    <div class="opts">
+      <button class="opt"><div class="no"><span class="mark"></span>Measure the First</div><div class="t">Open the treasury: emergency relief</div><div class="c">The small farms survive. Every future hard year arrives as a political demand.</div></button>
+      <button class="opt"><div class="no"><span class="mark"></span>Measure the Second</div><div class="t">Broker a deal with the large landowners</div><div class="c">Slower, partial, and paid for in concessions.</div></button>
+      <button class="opt"><div class="no"><span class="mark"></span>Measure the Third</div><div class="t">Let the market adjust</div><div class="c">Prices find their level. So do families.</div></button>
+    </div>
+    <div class="cause">Arrived because hard years always come, and Kemrath’s land rules decide who survives them.</div>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.opt').forEach(o=>{o.classList.toggle('on',o===b); o.querySelector('.mark').textContent=o===b?'✗':'';}); });
+</script>
+</body>
+</html>

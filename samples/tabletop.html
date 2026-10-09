@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Style sample: Tabletop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Literata:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--felt:#2f5a46;--felt-2:#264a3a;--card:#fbf6ec;--ink:#22201c;--ink-2:#5c564c;--gold:#e0a63a;--red:#c8483a;--teal:#2f8f86;--blue:#3d6fb0;--plum:#7a4a8c;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{min-height:100vh;color:var(--ink);font-family:'Literata',Georgia,serif;
+  background:radial-gradient(ellipse at 50% 35%,#3a6b55,var(--felt) 55%,#1d3a2d 100%);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");}
+.table{max-width:1100px;margin:0 auto;padding:28px 20px 40px;display:grid;grid-template-columns:230px 1fr 230px;gap:26px;align-items:start;}
+.label{font-family:'Bricolage Grotesque';font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#cfe3d6;margin-bottom:10px;}
+/* tracks */
+.board{background:#efe5cf;border-radius:10px;padding:14px;box-shadow:0 10px 0 #c9b893,0 18px 30px rgba(0,0,0,.35);}
+.track{margin-bottom:12px;}
+.track:last-child{margin-bottom:0;}
+.track .n{font-family:'Bricolage Grotesque';font-weight:600;font-size:12px;display:flex;justify-content:space-between;color:var(--ink-2);}
+.track .n b{color:var(--ink);font-weight:600;}
+.cells{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin-top:4px;position:relative;}
+.cells i{height:14px;background:#e2d6ba;border-radius:2px;}
+.cells i:nth-child(-n+3){background:#e7c7b5;}
+.cells i:nth-last-child(-n+3){background:#c9dcc4;}
+.cube{position:absolute;top:-3px;width:16px;height:20px;border-radius:3px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25),0 3px 4px rgba(0,0,0,.35);transition:left .5s cubic-bezier(.3,1.6,.5,1);}
+.ghost{position:absolute;top:-3px;width:16px;height:20px;border-radius:3px;border:2px dashed rgba(0,0,0,.45);transition:left .3s;display:none;}
+/* crisis card */
+.center{display:flex;flex-direction:column;align-items:center;}
+.crisis{width:100%;max-width:470px;background:var(--card);border-radius:16px;padding:14px;box-shadow:0 2px 0 #d9cfbb,0 24px 40px rgba(0,0,0,.45);transform:rotate(-1.2deg);}
+.crisis .frame{border:2px solid var(--ink);border-radius:10px;overflow:hidden;}
+.crisis .top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--red);color:#fff;font-family:'Bricolage Grotesque';font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;}
+.crisis .pic svg{display:block;width:100%;height:auto;}
+.crisis h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:34px;letter-spacing:-.02em;padding:12px 14px 2px;line-height:1;}
+.crisis .story{padding:6px 14px 12px;font-size:15px;line-height:1.55;}
+.crisis .story p+p{margin-top:.6em;}
+.crisis .why{margin:0 14px 14px;padding:8px 10px;background:#f0e6d2;border-radius:6px;font-size:13px;font-style:italic;color:var(--ink-2);}
+/* hand */
+.hand{display:flex;justify-content:center;margin-top:30px;padding-bottom:20px;}
+.pc{width:190px;min-height:220px;background:var(--card);border-radius:12px;padding:10px;margin:0 -12px;box-shadow:0 14px 24px rgba(0,0,0,.4);cursor:pointer;
+  transition:transform .25s cubic-bezier(.3,1.4,.5,1),box-shadow .25s;position:relative;border:none;text-align:left;font:inherit;color:inherit;}
+.pc:nth-child(1){transform:rotate(-8deg) translateY(12px);}
+.pc:nth-child(2){transform:rotate(0deg);z-index:2;}
+.pc:nth-child(3){transform:rotate(8deg) translateY(12px);}
+.pc:hover,.pc.on{transform:rotate(0) translateY(-26px) scale(1.04);z-index:5;box-shadow:0 30px 40px rgba(0,0,0,.5);}
+.pc .in{border:2px solid var(--ink);border-radius:8px;height:100%;padding:10px;display:flex;flex-direction:column;gap:8px;}
+.pc .k{font-family:'Bricolage Grotesque';font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#fff;padding:3px 8px;border-radius:999px;align-self:flex-start;}
+.pc .t{font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;line-height:1.05;letter-spacing:-.01em;}
+.pc .c{font-size:13px;line-height:1.45;font-style:italic;color:var(--ink-2);}
+.pc .fx{margin-top:auto;display:flex;flex-wrap:wrap;gap:4px;}
+.pc .fx span{font-family:'Bricolage Grotesque';font-weight:600;font-size:11px;padding:2px 6px;border-radius:4px;background:#efe5cf;}
+.up{color:#2c7a43;} .dn{color:#b23a2c;}
+/* family */
+.fam{display:flex;flex-direction:column;gap:10px;}
+.meeple{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.18);border-radius:10px;padding:8px 10px;color:#eef4ee;}
+.meeple svg{width:36px;height:40px;flex-shrink:0;filter:drop-shadow(0 3px 2px rgba(0,0,0,.4));}
+.meeple b{font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;display:block;}
+.meeple span{font-size:12px;opacity:.85;}
+.meeple.warn{outline:2px solid var(--gold);}
+.quote{margin-top:4px;background:var(--card);border-radius:10px;padding:10px 12px;font-size:13px;font-style:italic;line-height:1.5;position:relative;box-shadow:0 8px 16px rgba(0,0,0,.3);}
+.quote::before{content:'';position:absolute;top:-8px;left:22px;border:8px solid transparent;border-top:0;border-bottom-color:var(--card);}
+.turn{margin-top:18px;font-family:'Bricolage Grotesque';font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#cfe3d6;text-align:center;}
+.turn b{display:block;font-size:46px;letter-spacing:-.02em;color:var(--gold);line-height:1;}
+@media(max-width:960px){.table{grid-template-columns:1fr;}.side-l{order:3;}.side-r{order:2;}.pc{width:150px;min-height:210px;}.pc .t{font-size:16px;}}
+</style>
+</head>
+<body>
+<div class="table">
+  <div class="side-l">
+    <div class="label">Kemrath · State of the Nation</div>
+    <div class="board" id="board"></div>
+    <div class="turn">Year<b>14</b>of 50</div>
+  </div>
+
+  <div class="center">
+    <div class="crisis">
+      <div class="frame">
+        <div class="top"><span>Crisis · Hardship</span><span>Era II</span></div>
+        <div class="pic">
+          <svg viewBox="0 0 440 190">
+            <rect width="440" height="190" fill="#f2c56b"/>
+            <circle cx="340" cy="56" r="34" fill="#fff0c2"/><circle cx="340" cy="56" r="48" fill="none" stroke="#fff0c2" stroke-width="6" stroke-dasharray="6 10"/>
+            <path d="M0 120 Q110 96 220 112 T440 106 L440 190 L0 190 Z" fill="#d9894a"/>
+            <path d="M0 140 Q120 126 240 138 T440 134 L440 190 L0 190 Z" fill="#b8643a"/>
+            <g stroke="#7a3d22" stroke-width="3" fill="none" stroke-linecap="round"><path d="M40 162 l18 -6 l12 9 l20 -4"/><path d="M170 176 l16 -9 l10 10 l22 -6"/><path d="M300 158 l14 8 l20 -9 l12 6"/></g>
+            <path d="M84 138 L84 92 L114 70 L144 92 L144 138 Z" fill="#fbf6ec" stroke="#22201c" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M76 96 L114 64 L152 96" fill="none" stroke="#c8483a" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+            <rect x="107" y="112" width="15" height="26" fill="#22201c"/>
+            <g stroke="#22201c" stroke-width="5" stroke-linecap="round" fill="none"><path d="M236 140 L238 76"/><path d="M237 108 L214 90"/><path d="M237 96 L258 80"/></g>
+          </svg>
+        </div>
+      </div>
+      <h1>The bad year</h1>
+      <div class="story">
+        <p>No rain from April to September. The harvest will be a quarter of what the Vaels need; the ox was sold in July to pay the tax.</p>
+        <p>The relief fund was spent on roads. The biggest landowner sells water from his deep well at a price no one can pay.</p>
+      </div>
+      <div class="why">Drawn because hard years always come, and Kemrath’s land rules decide who survives them.</div>
+    </div>
+
+    <div class="hand">
+      <button class="pc" data-fx='{"eq":8,"pros":-8,"leg":10}'><div class="in"><span class="k" style="background:var(--teal)">Relief</span><div class="t">Open the treasury</div><div class="c">The small farms survive. Every future hard year arrives as a demand.</div><div class="fx"><span class="up">Equality ▲</span><span class="up">Legitimacy ▲</span><span class="dn">Prosperity ▼</span></div></div></button>
+      <button class="pc" data-fx='{"eq":-5,"pros":-2,"leg":-3}'><div class="in"><span class="k" style="background:var(--blue)">Bargain</span><div class="t">Deal with the landowners</div><div class="c">Slower, partial, and paid for in concessions.</div><div class="fx"><span class="dn">Equality ▼</span><span class="dn">Legitimacy ▼</span></div></div></button>
+      <button class="pc" data-fx='{"eq":-15,"pros":5,"leg":-10,"coh":-5}'><div class="in"><span class="k" style="background:var(--plum)">Laissez-faire</span><div class="t">Let the market adjust</div><div class="c">Prices find their level. So do families.</div><div class="fx"><span class="up">Prosperity ▲</span><span class="dn">Equality ▼▼</span><span class="dn">Legitimacy ▼</span></div></div></button>
+    </div>
+  </div>
+
+  <div class="side-r">
+    <div class="label">The Vael Family</div>
+    <div class="fam">
+      <div class="meeple"><svg viewBox="0 0 36 40"><path d="M18 2 a7 7 0 1 1 0 14 a7 7 0 1 1 0 -14 M6 38 L8 22 Q18 16 28 22 L30 38 Z" fill="#3f8f5a"/></svg><div><b>Aldric · 55</b><span>Farmer. Six acres, no rain.</span></div></div>
+      <div class="meeple warn"><svg viewBox="0 0 36 40"><path d="M18 2 a7 7 0 1 1 0 14 a7 7 0 1 1 0 -14 M6 38 L8 22 Q18 16 28 22 L30 38 Z" fill="#9b4a7a"/></svg><div><b>Maret · 51</b><span>Walked to the district office.</span></div></div>
+      <div class="meeple warn"><svg viewBox="0 0 36 40"><path d="M18 2 a7 7 0 1 1 0 14 a7 7 0 1 1 0 -14 M6 38 L8 22 Q18 16 28 22 L30 38 Z" fill="#3d6fb0"/></svg><div><b>Jorin · 30</b><span>Restless. Listening to angry men.</span></div></div>
+      <div class="meeple"><svg viewBox="0 0 36 40"><path d="M18 2 a7 7 0 1 1 0 14 a7 7 0 1 1 0 -14 M6 38 L8 22 Q18 16 28 22 L30 38 Z" fill="#c8483a"/></svg><div><b>Sele · 22</b><span>Studying in the capital.</span></div></div>
+      <div class="quote">“Land means you eat when other people don’t.” — Maret</div>
+    </div>
+  </div>
+</div>
+<script>
+const M=[["pros","Prosperity","Comfortable",58,"#e0a63a"],["eq","Equality","Unequal",42,"#c8483a"],["inc","Belonging","Most are inside",56,"#2f8f86"],["leg","Legitimacy","Accepted",55,"#3d6fb0"],["inst","Institutions","Personal",44,"#7a4a8c"],["coh","Cohesion","Holding",52,"#6b6b63"]];
+const pos=v=>`calc(${Math.min(9,Math.floor(v/10))} * (100% / 10) + (100% / 10 - 16px) / 2)`;
+document.getElementById('board').innerHTML=M.map(([k,n,w,v,c])=>`<div class="track"><div class="n"><b>${n}</b><span>${w}</span></div><div class="cells">${'<i></i>'.repeat(10)}<div class="ghost" id="g-${k}"></div><div class="cube" id="c-${k}" style="background:${c};left:${pos(v)}"></div></div></div>`).join('');
+const base=Object.fromEntries(M.map(m=>[m[0],m[3]]));
+document.querySelectorAll('.pc').forEach(card=>{
+  const fx=JSON.parse(card.dataset.fx);
+  card.onmouseenter=()=>M.forEach(([k])=>{ const g=document.getElementById('g-'+k); if(fx[k]){ g.style.display='block'; g.style.left=pos(base[k]+fx[k]); } else g.style.display='none'; });
+  card.onmouseleave=()=>document.querySelectorAll('.ghost').forEach(g=>g.style.display='none');
+  card.onclick=()=>{ document.querySelectorAll('.pc').forEach(c=>c.classList.toggle('on',c===card)); M.forEach(([k])=>document.getElementById('c-'+k).style.left=pos(base[k]+(fx[k]||0))); };
+});
+</script>
+</body>
+</html>

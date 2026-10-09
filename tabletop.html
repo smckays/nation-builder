@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nation Builder Tabletop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Literata:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--felt:#2f5a46;--card:#fbf6ec;--card-2:#f0e6d2;--ink:#22201c;--ink-2:#5c564c;--gold:#e0a63a;--red:#c8483a;--teal:#2f8f86;--blue:#3d6fb0;--plum:#7a4a8c;--board:#efe5cf;--board-edge:#c9b893;--up:#2c7a43;--dn:#b23a2c;
+  --display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Literata',Georgia,serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{min-height:100vh;color:var(--ink);font-family:var(--body);background:radial-gradient(ellipse at 50% 30%,#3a6b55,var(--felt) 55%,#1b372a 100%) fixed;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");}
+button{font:inherit;color:inherit;}
+
+#top{max-width:1240px;margin:0 auto;padding:14px 20px 0;display:flex;justify-content:space-between;align-items:center;color:#cfe3d6;font-family:var(--display);}
+#top .t{font-weight:800;font-size:15px;letter-spacing:.02em;}
+#top .t span{font-weight:400;opacity:.75;margin-left:8px;}
+.ghost-btn{background:none;border:1.5px solid rgba(207,227,214,.4);color:#cfe3d6;border-radius:999px;padding:5px 12px;font-family:var(--display);font-weight:600;font-size:12px;cursor:pointer;}
+.ghost-btn:hover{border-color:#cfe3d6;}
+
+.table{max-width:1240px;margin:0 auto;padding:16px 20px 60px;display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:28px;align-items:start;}
+.side{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;scrollbar-width:thin;padding-bottom:8px;}
+.label{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#cfe3d6;margin-bottom:10px;}
+
+/* board */
+.board{background:var(--board);border-radius:10px;padding:14px;box-shadow:0 8px 0 var(--board-edge),0 16px 28px rgba(0,0,0,.35);}
+.track{margin-bottom:12px;}
+.track .n{font-family:var(--display);font-weight:600;font-size:12px;display:flex;justify-content:space-between;gap:6px;color:var(--ink-2);}
+.track .n b{color:var(--ink);font-weight:600;}
+.track .d{font-weight:800;margin-left:4px;}
+.lane{position:relative;height:16px;margin-top:4px;border-radius:3px;background:linear-gradient(90deg,#e7c7b5 0 35%,#e2d6ba 35% 65%,#c9dcc4 65%);}
+.lane::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(0,0,0,.08) calc(10% - 1px) 10%);border-radius:3px;}
+.cube{position:absolute;top:-3px;width:16px;height:22px;border-radius:3px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25),0 3px 4px rgba(0,0,0,.35);transition:left .7s cubic-bezier(.3,1.5,.5,1);z-index:2;}
+.prev{position:absolute;top:-3px;width:16px;height:22px;border-radius:3px;border:2px dashed rgba(0,0,0,.5);display:none;z-index:1;transition:left .25s;}
+.mark{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink);opacity:.45;display:none;}
+.years{margin-top:22px;color:#cfe3d6;font-family:var(--display);}
+.years .big{display:flex;align-items:baseline;gap:8px;}
+.years .big b{font-size:44px;font-weight:800;color:var(--gold);letter-spacing:-.02em;line-height:1;}
+.years .big span{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
+.ytrack{position:relative;height:10px;margin-top:10px;border-radius:5px;background:rgba(0,0,0,.25);}
+.ytrack i{position:absolute;top:1px;width:8px;height:8px;border-radius:50%;background:rgba(207,227,214,.45);transform:translateX(-4px);}
+.ytrack i.done{background:var(--gold);}
+.ytrack .now{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;background:#fff;transform:translateX(-2px);transition:left .8s ease;}
+.faults{margin-top:22px;}
+.fault{background:var(--card);border-radius:8px;padding:8px 10px 8px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.4;border-left:5px solid var(--red);box-shadow:0 6px 12px rgba(0,0,0,.3);animation:drop .5s cubic-bezier(.3,1.4,.5,1) both;}
+.fault.new{outline:2px solid var(--gold);}
+
+/* family */
+.fam{display:flex;flex-direction:column;gap:10px;}
+.meeple{background:rgba(0,0,0,.2);border-radius:12px;padding:9px 10px;color:#eef4ee;transition:background .3s;}
+.meeple .row{display:flex;align-items:center;gap:10px;}
+.meeple svg{width:34px;height:38px;flex-shrink:0;filter:drop-shadow(0 3px 2px rgba(0,0,0,.4));}
+.meeple b{font-family:var(--display);font-weight:800;font-size:15px;display:block;}
+.meeple .role{font-size:12px;opacity:.8;}
+.bubble{display:none;margin-top:9px;background:var(--card);color:var(--ink);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.5;position:relative;box-shadow:0 6px 14px rgba(0,0,0,.3);}
+.bubble::before{content:'';position:absolute;top:-7px;left:16px;border:7px solid transparent;border-top:0;border-bottom-color:var(--card);}
+.bubble.show{display:block;animation:pop .35s cubic-bezier(.3,1.5,.5,1) both;}
+.bubble.say{font-style:italic;}
+.bubble.impact{background:#fff4dc;box-shadow:0 0 0 2px var(--gold),0 6px 14px rgba(0,0,0,.3);}
+.bubble.impact::before{border-bottom-color:var(--gold);}
+.bubble.fate{font-size:13px;}
+.meeple.lit{background:rgba(224,166,58,.28);}
+
+/* center */
+.center{display:flex;flex-direction:column;align-items:center;min-width:0;}
+.card{width:100%;max-width:560px;background:var(--card);border-radius:16px;padding:14px;box-shadow:0 2px 0 #d9cfbb,0 24px 40px rgba(0,0,0,.45);}
+.deal{animation:deal .55s cubic-bezier(.25,1.2,.5,1) both;}
+.card .frame{border:2px solid var(--ink);border-radius:10px;overflow:hidden;}
+.card .band{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;color:#fff;font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;}
+.card .art svg{display:block;width:100%;height:auto;}
+.card h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.4vw,34px);letter-spacing:-.02em;padding:12px 6px 2px;line-height:1.05;}
+.card h1.q{font-size:clamp(22px,2.8vw,28px);}
+.card .story{padding:8px 6px 4px;font-size:15px;line-height:1.6;}
+.card .story p+p{margin-top:.7em;}
+.card .note{margin:10px 6px 2px;padding:8px 10px;background:var(--card-2);border-radius:6px;font-size:13px;font-style:italic;color:var(--ink-2);line-height:1.5;}
+.card .note b{font-family:var(--display);font-style:normal;font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:2px;color:var(--ink);}
+.card .actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 6px 4px;flex-wrap:wrap;}
+.geo{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;padding:10px 6px 0;font-size:14px;}
+.geo dt{font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding-top:3px;}
+.primary{background:var(--ink);color:var(--card);border:none;border-radius:999px;padding:11px 20px;font-family:var(--display);font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 0 #000;transition:transform .1s;}
+.primary:hover{transform:translateY(-1px);}
+.primary:active{transform:translateY(2px);box-shadow:0 2px 0 #000;}
+.link{background:none;border:none;font-family:var(--display);font-weight:600;font-size:13px;color:var(--ink-2);cursor:pointer;text-decoration:underline;padding:11px 6px;}
+
+/* hand */
+.hand{display:flex;justify-content:center;margin-top:34px;padding:0 20px 8px;width:100%;}
+.pc{width:178px;min-height:250px;background:var(--card);border-radius:12px;padding:9px;margin:0 -16px;box-shadow:0 14px 24px rgba(0,0,0,.4);cursor:pointer;flex-shrink:0;
+  transition:transform .25s cubic-bezier(.3,1.4,.5,1),box-shadow .25s;position:relative;border:none;text-align:left;animation:deal .5s cubic-bezier(.25,1.2,.5,1) both;}
+.pc .in{border:2px solid var(--ink);border-radius:8px;height:100%;min-height:230px;padding:10px;display:flex;flex-direction:column;gap:7px;}
+.pc .k{font-family:var(--display);font-weight:800;font-size:12px;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.pc .t{font-family:var(--display);font-weight:800;font-size:16px;line-height:1.1;letter-spacing:-.01em;}
+.pc .c{font-size:12.5px;line-height:1.45;font-style:italic;color:var(--ink-2);}
+.pc .fx{margin-top:auto;display:flex;flex-wrap:wrap;gap:4px;}
+.pc .fx span{font-family:var(--display);font-weight:600;font-size:10.5px;padding:2px 6px;border-radius:4px;background:var(--board);}
+.pc .fx .none{color:var(--ink-2);font-weight:400;font-style:italic;background:none;padding:0;}
+.pc:hover,.pc.on{transform:rotate(0) translateY(-26px) scale(1.04)!important;z-index:5;box-shadow:0 30px 40px rgba(0,0,0,.5);}
+.pc.on .in{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold);}
+.up{color:var(--up);} .dn{color:var(--dn);}
+.played{width:100%;max-width:560px;margin-top:22px;background:rgba(0,0,0,.22);border-radius:12px;padding:12px 14px;color:#eef4ee;display:none;align-items:center;gap:14px;flex-wrap:wrap;}
+.played.show{display:flex;animation:pop .3s ease both;}
+.played .x{flex:1;min-width:220px;font-size:13.5px;line-height:1.5;}
+.played .x b{font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block;color:var(--gold);margin-bottom:2px;}
+.played .primary{background:var(--gold);color:var(--ink);box-shadow:0 4px 0 #9a6c1c;}
+
+.record .r{display:grid;grid-template-columns:100px 1fr;gap:10px;padding:7px 6px;border-bottom:1px dashed #d9cfbb;font-size:14px;}
+.record .r .k{font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);padding-top:3px;}
+.record .r small{display:block;font-family:var(--display);font-weight:600;color:var(--red);font-size:11px;}
+.verdict{font-size:16px;line-height:1.65;padding:8px 6px;}
+
+.draw{animation:draw .85s cubic-bezier(.2,1.05,.4,1) both;}
+@keyframes draw{0%{opacity:0;transform:perspective(900px) translate(340px,-280px) rotate(26deg) rotateY(75deg) scale(.5);}35%{opacity:1;}100%{opacity:1;transform:perspective(900px) rotate(-1.2deg);}}
+.fault-chip{display:none;background:var(--red);color:#fff;border:none;border-radius:999px;padding:4px 10px;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.04em;cursor:pointer;}
+@keyframes deal{from{opacity:0;transform:translateY(-40px) rotate(-6deg);}to{opacity:1;}}
+@keyframes drop{from{opacity:0;transform:translateX(-20px);}to{opacity:1;}}
+@keyframes pop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}}
+
+/* narrow screens: board and family become a sticky strip */
+@media(max-width:1020px){
+  .table{grid-template-columns:1fr;gap:16px;padding:10px 12px 40px;}
+  .side{position:static;max-height:none;overflow:visible;}
+  .side-l{order:1;} .center{order:2;} .side-r{order:3;}
+  .board{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 14px;padding:10px 12px;}
+  .track{margin:0;}
+  .years{margin-top:12px;} .years .big b{font-size:30px;}
+  .faults{display:flex;gap:8px;overflow-x:auto;margin-top:12px;}
+  .fault{min-width:220px;margin:0;}
+  .fam{display:grid;grid-template-columns:1fr 1fr;}
+  .hand{flex-wrap:wrap;gap:12px;padding:0;margin-top:20px;}
+  .pc{margin:0;width:calc(50% - 6px);transform:none!important;min-height:0;}
+  .pc .in{min-height:200px;}
+  .pc:hover,.pc.on{transform:translateY(-4px)!important;}
+}
+.inline-only{display:none;}
+.inline-fam{margin:10px 6px 0;}
+.inline-fam p{font-size:14px;line-height:1.55;padding:8px 0;border-top:1px dashed #d9cfbb;}
+.inline-fam b{font-family:var(--display);font-weight:800;}
+@media(max-width:1020px){
+  .inline-only{display:block;}
+  .table{padding-bottom:110px;}
+  .side-r{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;background:rgba(20,40,30,.97);padding:8px 10px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -8px 20px rgba(0,0,0,.35);}
+  .side-r .label{display:none;}
+  .fam{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .meeple{padding:6px;cursor:pointer;} .meeple .role{display:none;} .meeple .row{gap:6px;} .meeple svg{width:22px;height:26px;} .meeple b{font-size:12px;}
+  .bubble{position:absolute;left:10px;right:10px;bottom:calc(100% + 6px);margin:0;max-height:38vh;overflow:auto;}
+  .bubble::before{display:none;}
+  .bubble.fate{display:none!important;}
+}
+@media(max-width:1020px){
+  .side-l{position:sticky;top:0;z-index:15;margin:0 -12px;padding:8px 12px 9px;background:rgba(24,48,37,.97);box-shadow:0 8px 16px rgba(0,0,0,.3);max-height:none;overflow:visible;}
+  .side-l>.label{display:none;}
+  .board{grid-template-columns:repeat(3,1fr)!important;gap:5px 10px;padding:7px 9px;box-shadow:0 3px 0 var(--board-edge);}
+  .track .n{font-size:10.5px;} .track .n .w{display:none;}
+  .lane{height:8px;margin-top:3px;}
+  .cube,.prev{width:11px;height:14px;top:-3px;}
+  .meta{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+  .years{margin-top:0!important;} .years .big b{font-size:20px!important;} .ytrack{display:none;}
+  .fault-chip{display:inline-block;}
+  .fault-chip:empty{display:none;}
+  .faults{display:none!important;}
+  .faults.open{display:block!important;position:absolute;left:12px;right:12px;top:100%;max-height:50vh;overflow:auto;background:rgba(24,48,37,.98);padding:10px;border-radius:0 0 12px 12px;margin:0;}
+  .faults.open .fault{min-width:0;margin-bottom:8px;}
+}
+@media(max-width:560px){ .board{grid-template-columns:1fr 1fr;} #top .t span{display:none;} }
+</style>
+</head>
+<body>
+<div id="top"><div class="t">Nation Builder<span id="top-sub"></span></div><div><button class="ghost-btn" id="snd">♪ On</button> <button class="ghost-btn" onclick="newGame()">New game</button></div></div>
+<div class="table">
+  <aside class="side side-l">
+    <div class="label" id="board-label">State of the Nation</div>
+    <div class="board" id="board"></div>
+    <div class="meta"><div class="years"><div class="big"><span>Year</span><b id="year">1</b><span>of 50</span></div><div class="ytrack" id="ytrack"></div></div><button class="fault-chip" id="fault-chip" onclick="$('faults').classList.toggle('open')"></button></div>
+    <div class="faults" id="faults"></div>
+  </aside>
+  <main class="center" id="center"></main>
+  <aside class="side side-r">
+    <div class="label" id="fam-label">The Family</div>
+    <div class="fam" id="fam"></div>
+  </aside>
+</div>
+
+<script src="engine.js"></script>
+<script>
+let state=null;
+const $=id=>document.getElementById(id);
+const ROLES=["F","M","S","D"];
+const COLORS={F:'#3f8f5a',M:'#9b4a7a',S:'#3d6fb0',D:'#c8483a'};
+const METER_COLORS={pros:'#e0a63a',eq:'#c8483a',inc:'#2f8f86',leg:'#3d6fb0',inst:'#7a4a8c',coh:'#6b6b63'};
+const CAT_COLORS={Power:'#c8483a',Economy:'#c98a2a',Rights:'#3d6fb0',Citizenship:'#2f8f86',Justice:'#7a4a8c',Labor:'#9a5a32',Religion:'#6b6b9c',Trade:'#2f7f9f',Education:'#4f8a4e',Accountability:'#4a4a44'};
+
+// ═══════════════════════════════════════════════════════════
+// FLAT ILLUSTRATIONS — 440×170 card art built from motifs
+// ═══════════════════════════════════════════════════════════
+const K={ink:'#22201c',card:'#fbf6ec',red:'#c8483a',gold:'#e0a63a',sand:'#f2c56b',orange:'#d9894a',brown:'#b8643a',dbrown:'#7a3d22',teal:'#2f8f86',blue:'#3d6fb0',plum:'#7a4a8c',
+  sky:'#a8d0e2',night:'#2b3550',dusk:'#e58a5c',storm:'#6f7a86',grass:'#8cb874',dgrass:'#5d8a4e',stone:'#cfc4b1',sea:'#4f8fb8',skin:'#e8b796',wall:'#e2d6bd'};
+const O=`stroke="${K.ink}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
+function prand(n){ const x=Math.sin(n*12.9898)*43758.5453; return x-Math.floor(x); }
+const M = {
+  sun:(x=350,y=50)=>`<circle cx="${x}" cy="${y}" r="30" fill="#fff0c2"/><circle cx="${x}" cy="${y}" r="44" fill="none" stroke="#fff0c2" stroke-width="6" stroke-dasharray="6 10"/>`,
+  moon:(x=360,y=44)=>`<circle cx="${x}" cy="${y}" r="22" fill="#f4ecd0"/><circle cx="${x+10}" cy="${y-6}" r="19" fill="${K.night}"/>`,
+  stars:()=>Array.from({length:24},(_,i)=>`<circle cx="${(prand(i)*440)|0}" cy="${(prand(i+50)*80)|0}" r="${prand(i+9)>.8?2:1.2}" fill="#f4ecd0"/>`).join(''),
+  hills:(c1,c2,y1=112,y2=138)=>`<path d="M0 ${y1} Q110 ${y1-24} 220 ${y1-8} T440 ${y1-14} L440 170 L0 170 Z" fill="${c1}"/><path d="M0 ${y2} Q120 ${y2-14} 240 ${y2-2} T440 ${y2-6} L440 170 L0 170 Z" fill="${c2}"/>`,
+  house:(x,y=138,roof=K.red,lit)=>`<path d="M${x} ${y} L${x} ${y-44} L${x+30} ${y-66} L${x+60} ${y-44} L${x+60} ${y} Z" fill="${K.card}" ${O}/><path d="M${x-8} ${y-40} L${x+30} ${y-72} L${x+68} ${y-40}" fill="none" stroke="${roof}" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/><rect x="${x+23}" y="${y-24}" width="14" height="24" fill="${K.ink}"/>${lit?`<rect x="${x+8}" y="${y-38}" width="10" height="10" fill="${K.gold}" ${O}/>`:''}`,
+  tree:(x,y=140)=>`<path d="M${x} ${y} L${x} ${y-26}" ${O}/><circle cx="${x}" cy="${y-38}" r="18" fill="${K.dgrass}" ${O}/>`,
+  dead:(x,y=142)=>`<g fill="none" stroke="${K.ink}" stroke-width="5" stroke-linecap="round"><path d="M${x} ${y} L${x+2} ${y-62}"/><path d="M${x+1} ${y-30} L${x-22} ${y-48}"/><path d="M${x+1} ${y-44} L${x+22} ${y-60}"/></g>`,
+  cracks:()=>`<g stroke="${K.dbrown}" stroke-width="3" fill="none" stroke-linecap="round"><path d="M40 160 l18 -6 l12 9 l20 -4"/><path d="M170 166 l16 -9 l10 10 l22 -6"/><path d="M300 154 l14 8 l20 -9 l12 6"/></g>`,
+  rows:(c=K.dgrass)=>Array.from({length:6},(_,i)=>`<path d="M0 ${132+i*7} Q220 ${126+i*7} 440 ${132+i*7}" stroke="${c}" stroke-width="3" fill="none"/>`).join(''),
+  sea:(y=104,c=K.sea)=>`<rect x="0" y="${y}" width="440" height="${170-y}" fill="${c}"/>`+Array.from({length:9},(_,i)=>`<path d="M${i*52+(i%2)*20} ${y+18+(i%3)*16} q8 -6 16 0 q8 6 16 0" stroke="${K.card}" stroke-width="3" fill="none" opacity=".8"/>`).join(''),
+  ship:(x,y=112)=>`<path d="M${x} ${y} L${x+70} ${y} L${x+60} ${y+14} L${x+10} ${y+14} Z" fill="${K.brown}" ${O}/><path d="M${x+34} ${y} L${x+34} ${y-56}" ${O}/><path d="M${x+36} ${y-52} L${x+62} ${y-8} L${x+36} ${y-8} Z" fill="${K.card}" ${O}/><path d="M${x+32} ${y-44} L${x+12} ${y-8} L${x+32} ${y-8} Z" fill="${K.card}" ${O}/>`,
+  people:(x,y,n,o={})=>Array.from({length:n},(_,i)=>{ const px=x+i*(o.gap||20), c=o.color||[K.red,K.blue,K.teal,K.gold,K.plum,K.brown][(i+Math.round(x))%6], dy=(i%2)*3;
+    return `<circle cx="${px}" cy="${y-30+dy}" r="6" fill="${K.skin}" ${O.replace('3','2')}/><path d="M${px-9} ${y+dy} Q${px} ${y-28+dy} ${px+9} ${y+dy} Z" fill="${c}" ${O.replace('3','2')}/>${o.rifle?`<path d="M${px+11} ${y-4+dy} L${px+11} ${y-36+dy}" stroke="${K.ink}" stroke-width="3"/>`:''}${o.torch&&i%2===0?`<path d="M${px+11} ${y-4+dy} L${px+11} ${y-32+dy}" stroke="${K.dbrown}" stroke-width="3"/>${M.flame(px+11,y-36+dy)}`:''}${o.sign&&i===Math.floor(n/2)?`<path d="M${px+11} ${y+dy} L${px+11} ${y-46+dy}" stroke="${K.dbrown}" stroke-width="3"/><rect x="${px-6}" y="${y-62+dy}" width="34" height="18" fill="${K.card}" ${O.replace('3','2')}/>`:''}`; }).join(''),
+  flame:(x,y)=>`<path d="M${x} ${y-14} Q${x+8} ${y-4} ${x} ${y+2} Q${x-8} ${y-4} ${x} ${y-14} Z" fill="${K.gold}" stroke="${K.red}" stroke-width="2"/>`,
+  interior:(wall=K.wall)=>`<rect width="440" height="170" fill="${wall}"/><rect y="130" width="440" height="40" fill="${K.brown}"/>`+[30,130,250,350].map(x=>`<rect x="${x}" y="10" width="26" height="120" fill="${K.card}" ${O}/><rect x="${x-6}" y="6" width="38" height="10" fill="${K.card}" ${O}/>`).join(''),
+  table:()=>`<rect x="70" y="104" width="300" height="14" fill="${K.brown}" ${O}/><path d="M86 118 L86 140 M354 118 L354 140" ${O}/>`,
+  scroll:()=>`<rect x="190" y="88" width="64" height="18" rx="4" fill="${K.card}" ${O}/><path d="M200 97 L244 97" stroke="${K.ink}" stroke-width="2"/>`,
+  scales:()=>`<g ${O} fill="none"><path d="M220 40 L220 102 M186 50 L254 50"/><path d="M186 50 L174 76 L198 76 Z M254 50 L242 76 L266 76 Z" fill="${K.gold}"/></g>`,
+  clock:()=>`<circle cx="220" cy="60" r="28" fill="${K.card}" ${O}/><path d="M220 60 L220 42 M220 60 L234 68" ${O}/>`,
+  church:(x=170)=>`<rect x="${x}" y="70" width="100" height="70" fill="${K.card}" ${O}/><path d="M${x-8} 74 L${x+50} 36 L${x+108} 74" fill="none" stroke="${K.plum}" stroke-width="8" stroke-linejoin="round"/><rect x="${x+38}" y="10" width="24" height="44" fill="${K.card}" ${O}/><path d="M${x+50} -2 L${x+50} 12 M${x+44} 4 L${x+56} 4" ${O}/><path d="M${x+38} 140 L${x+38} 108 Q${x+50} 94 ${x+62} 108 L${x+62} 140" fill="${K.ink}"/>`,
+  school:(closed)=>`<rect x="120" y="66" width="200" height="74" fill="${K.red}" ${O}/><path d="M110 70 L220 34 L330 70" fill="none" stroke="${K.dbrown}" stroke-width="8" stroke-linejoin="round"/><rect x="206" y="40" width="28" height="22" fill="${K.card}" ${O}/><circle cx="220" cy="51" r="5" fill="${K.gold}"/>`+[140,170,260,290].map(x=>`<rect x="${x}" y="84" width="20" height="18" fill="${closed?K.storm:K.sky}" ${O.replace('3','2')}/>`).join('')+`<rect x="208" y="104" width="24" height="36" fill="${K.ink}"/>`+(closed?`<path d="M200 112 L240 108 M200 126 L240 122" stroke="${K.brown}" stroke-width="6"/><rect x="246" y="108" width="48" height="22" fill="${K.card}" ${O.replace('3','2')}/><path d="M252 119 L288 119" stroke="${K.red}" stroke-width="3"/>`:''),
+  gate:(customs)=>`<rect x="60" y="80" width="56" height="60" fill="${K.card}" ${O}/><path d="M54 84 L88 60 L122 84" fill="none" stroke="${K.red}" stroke-width="7" stroke-linejoin="round"/><rect x="116" y="104" width="230" height="10" fill="${K.card}" ${O}/>`+Array.from({length:7},(_,i)=>`<rect x="${126+i*32}" y="104" width="16" height="10" fill="${K.red}"/>`).join('')+`<path d="M346 96 L346 140" ${O}/>`+(customs?`<rect x="300" y="60" width="70" height="24" fill="${K.gold}" ${O}/><path d="M312 72 L358 72" stroke="${K.ink}" stroke-width="3"/>`:''),
+  road:()=>`<path d="M196 98 L244 98 L360 170 L80 170 Z" fill="#e8d3a6"/>`,
+  stakes:()=>[60,130,200,270,340,400].map((x,i)=>`<path d="M${x} ${150-i%2*4} L${x} ${116-i%2*4}" stroke="${K.card}" stroke-width="4"/><path d="M${x} ${116-i%2*4} l14 5 l-14 5 Z" fill="${K.red}"/>`).join('')+`<path d="M60 122 L400 118" stroke="${K.ink}" stroke-width="2" stroke-dasharray="4 5"/>`,
+  factory:()=>`<rect x="70" y="70" width="300" height="74" fill="${K.brown}" ${O}/>`+[110,190,290].map((x,i)=>`<rect x="${x}" y="20" width="22" height="52" fill="${K.storm}" ${O}/><circle cx="${x+18}" cy="10" r="10" fill="${K.stone}" opacity=".85"/><circle cx="${x+34}" cy="2" r="8" fill="${K.stone}" opacity=".6"/>`).join('')+[90,130,250,330].map(x=>`<rect x="${x}" y="84" width="22" height="16" fill="${K.ink}"/>`).join('')+`<rect x="190" y="104" width="60" height="40" fill="${K.ink}"/>`,
+  flood:()=>[[50,112],[150,118],[260,108],[350,120]].map(([x,y],i)=>`<path d="M${x} ${y} L${x+36} ${y-28} L${x+72} ${y}" fill="${i%2?K.brown:K.red}" ${O}/>`).join('')+M.sea(112,'#4d7fa0'),
+  rain:()=>Array.from({length:40},(_,i)=>{ const x=(prand(i)*460)|0, y=(prand(i+99)*150)|0; return `<path d="M${x} ${y} l-6 14" stroke="#dfe8ee" stroke-width="2" opacity=".7"/>`; }).join(''),
+  shop:()=>`<rect x="80" y="30" width="280" height="110" fill="${K.brown}" ${O}/><rect x="120" y="40" width="200" height="22" fill="${K.ink}"/><path d="M140 51 L300 51" stroke="${K.gold}" stroke-width="4"/><rect x="104" y="74" width="130" height="66" fill="${K.night}" ${O}/><path d="M150 74 L170 102 L140 118 L180 140 M190 74 L176 104 L214 110" stroke="${K.card}" stroke-width="2.5" fill="none"/><rect x="258" y="74" width="62" height="66" fill="${K.plum}" ${O}/>`+Array.from({length:7},(_,i)=>`<path d="M${108+i*18} 156 l6 -4 l4 6 Z" fill="${K.card}" stroke="${K.ink}" stroke-width="1"/>`).join(''),
+  square:()=>`<rect x="0" y="40" width="110" height="100" fill="${K.wall}" ${O}/><rect x="330" y="30" width="110" height="110" fill="${K.card}" ${O}/><rect x="170" y="10" width="100" height="130" fill="${K.stone}" ${O}/><circle cx="220" cy="50" r="20" fill="${K.card}" ${O}/><path d="M220 50 L220 38 M220 50 L230 56" ${O}/>`,
+  bonfire:(x=220,y=150)=>`<path d="M${x-26} ${y} L${x+26} ${y-6} M${x-22} ${y-6} L${x+24} ${y}" stroke="${K.dbrown}" stroke-width="6" stroke-linecap="round"/>${M.flame(x-10,y-10)}${M.flame(x+8,y-14)}${M.flame(x,y-22)}<rect x="${x+20}" y="${y-58}" width="16" height="12" fill="${K.card}" ${O.replace('3','2')} transform="rotate(14 ${x+28} ${y-52})"/>`,
+  desk:()=>`<rect x="40" y="96" width="170" height="44" fill="${K.brown}" ${O}/><circle cx="120" cy="66" r="10" fill="${K.skin}" ${O}/><path d="M102 96 Q120 72 138 96 Z" fill="${K.ink}"/><rect x="146" y="86" width="40" height="10" fill="${K.card}" ${O.replace('3','2')}/><rect x="320" y="20" width="80" height="54" fill="${K.sky}" ${O}/><path d="M360 20 L360 74 M320 47 L400 47" stroke="${K.ink}" stroke-width="3"/>`,
+  press:()=>`<rect width="440" height="170" fill="#5f574f"/><rect y="132" width="440" height="38" fill="${K.brown}"/><rect x="150" y="40" width="140" height="92" fill="${K.ink}"/><rect x="164" y="54" width="112" height="22" fill="${K.stone}"/><rect x="206" y="16" width="28" height="30" fill="${K.stone}" ${O}/><rect x="170" y="96" width="100" height="10" fill="${K.card}"/>`+[320,346,372].map((x,i)=>`<rect x="${x}" y="${110+i*4}" width="40" height="28" fill="${K.card}" ${O.replace('3','2')} transform="rotate(${i*6-6} ${x+20} ${124+i*4})"/>`).join('')+[30,64,98].map(x=>`<rect x="${x}" y="30" width="26" height="34" fill="${K.card}"/>`).join(''),
+  chair:()=>`<path d="M186 140 L186 50 Q220 26 254 50 L254 140" fill="${K.plum}" ${O}/><rect x="176" y="100" width="88" height="14" fill="${K.gold}" ${O}/><path d="M208 30 L214 14 L220 26 L226 14 L232 30 Z" fill="${K.gold}" ${O.replace('3','2')}/>`,
+  banner:()=>`<path d="M150 70 L150 150 M290 70 L290 150" stroke="${K.dbrown}" stroke-width="4"/><rect x="150" y="66" width="140" height="30" fill="${K.card}" ${O}/><path d="M166 81 L274 81" stroke="${K.red}" stroke-width="4"/>`,
+  volcano:()=>`<path d="M140 120 L196 52 L244 52 L300 120 Z" fill="#6b5a4e" ${O}/><circle cx="214" cy="38" r="12" fill="${K.stone}" opacity=".8"/><circle cx="232" cy="24" r="9" fill="${K.stone}" opacity=".6"/>`,
+  mesa:()=>[[30,70,90],[170,84,70],[300,64,110]].map(([x,y,w])=>`<path d="M${x} 130 L${x+10} ${y} L${x+w-10} ${y} L${x+w} 130 Z" fill="${K.brown}" ${O}/>`).join(''),
+  river:(y=150)=>`<path d="M0 ${y} Q110 ${y-14} 220 ${y-4} T440 ${y-8}" stroke="${K.sea}" stroke-width="10" fill="none"/>`
+};
+function art(sky, ...parts){ return `<svg viewBox="0 0 440 170" xmlns="http://www.w3.org/2000/svg"><rect width="440" height="170" fill="${sky}"/>${parts.join('')}</svg>`; }
+const field=(h1=K.grass,h2=K.dgrass)=>M.hills(h1,h2);
+const GEO_ART={
+  coastal:()=>art(K.sky,M.sun(),M.sea(100),`<path d="M0 100 L220 92 L250 170 L0 170 Z" fill="${K.grass}"/>`,M.house(40,128,K.red,1),M.house(130,124,K.blue),M.ship(300,104)),
+  landlocked:()=>art(K.sky,M.sun(380,40),field('#7aa868',K.dgrass),M.river(150),M.tree(60,130),M.tree(110,124),M.tree(330,128),M.tree(380,132),M.house(190,132,K.red,1)),
+  arid:()=>art(K.sand,M.sun(370,40),`<rect y="120" width="440" height="50" fill="${K.orange}"/>`,M.mesa(),M.river(156)),
+  island:()=>art(K.sky,M.sun(70,40),M.sea(110),`<ellipse cx="220" cy="128" rx="170" ry="34" fill="${K.grass}" ${O}/>`,M.volcano(),M.tree(110,128),M.tree(330,130)),
+  plains:()=>art(K.sky,M.sun(80,40),`<rect y="96" width="440" height="74" fill="${K.sand}"/>`,M.rows(K.gold),M.river(116),M.house(300,104,K.red))
+};
+const Q_ART={
+  Power:()=>art(K.wall,M.interior(),M.people(110,104,12,{gap:20}),M.table()),
+  Economy:()=>art(K.sky,M.sun(380,40),field(),M.rows(),M.house(60,130,K.red,1),M.people(260,150,1,{color:K.teal})),
+  Rights:()=>art(K.wall,M.interior(),M.people(130,104,9,{gap:22}),M.table(),M.scroll()),
+  Citizenship:()=>art(K.sky,M.sun(60,36),M.square(),`<rect y="140" width="440" height="30" fill="${K.stone}"/>`,M.people(40,162,19,{gap:21})),
+  Justice:()=>art(K.wall,M.interior(),M.scales(),M.people(90,150,4,{gap:22}),M.people(290,150,4,{gap:22})),
+  Labor:()=>art(K.sky,M.sun(80,36),field(),M.rows(),M.people(120,150,9,{gap:24,color:K.brown})),
+  Religion:()=>art(K.sky,M.sun(380,36),field(),M.church(),M.people(40,160,4),M.people(310,160,5)),
+  Trade:()=>art(K.sky,M.sun(),M.sea(100),M.ship(250,104),M.ship(40,116),M.people(160,96,3)),
+  Education:()=>art(K.sky,M.sun(60,30),field(),M.school(false),M.people(90,166,4,{gap:16}),M.people(270,166,4,{gap:16})),
+  Accountability:()=>art(K.wall,M.interior(),M.clock(),M.people(110,124,12,{gap:20}),M.table())
+};
+const CRISIS_ART={
+  plague:()=>art(K.night,M.stars(),M.moon(),M.sea(104,'#2f4d5e'),M.house(20,104,K.dbrown,1),M.house(100,104,K.brown),M.ship(280,100),`<rect width="440" height="170" fill="#7fae6a" opacity=".22"/>`),
+  road:()=>art(K.sky,M.sun(380,40),field(),M.road(),M.gate(false),M.people(150,104,5,{gap:34,color:'#4f6a3e',rifle:true})),
+  landgrab:()=>art(K.sky,M.sun(70,38),field(),M.rows(),M.stakes(),M.people(320,112,3,{gap:24,color:K.ink,rifle:true})),
+  school:()=>art(K.storm,field(K.dgrass,'#4c7240'),M.school(true),M.people(60,166,1,{color:K.plum})),
+  badyear:()=>state.nation.tags.includes('island')
+      ? art(K.storm,M.rain(),M.sea(110,'#4d6f86'),M.house(70,120,K.brown),M.dead(300,140),M.rain())
+      : art(K.sand,M.sun(),M.hills(K.orange,K.brown),M.cracks(),M.house(70,124,K.red),M.dead(250),M.people(330,150,1,{color:K.teal})),
+  nativism:()=>art(K.dusk,`<rect y="140" width="440" height="30" fill="${K.stone}"/>`,M.shop()),
+  petition:()=>art(K.dusk,M.square(),`<rect y="140" width="440" height="30" fill="${K.stone}"/>`,M.people(20,166,6),M.people(300,166,6),M.bonfire()),
+  tariff:()=>art(K.sky,M.sun(70,38),field(),M.road(),M.gate(true),M.people(150,104,4,{gap:34,color:K.night})),
+  flood:()=>art(K.storm,M.rain(),M.flood(),M.rain()),
+  veterans:()=>art(K.wall,`<rect y="140" width="440" height="30" fill="${K.brown}"/>`,M.desk(),M.people(240,140,5,{gap:22,color:'#4f6a3e'})),
+  strike:()=>art(K.storm,`<rect y="140" width="440" height="30" fill="#5f574f"/>`,M.factory(),M.people(20,166,20,{gap:21,sign:true})),
+  succession:()=>art(K.wall,M.interior(),M.chair(),M.people(60,150,2,{color:K.ink}),M.people(330,150,2,{color:'#4f6a3e',rifle:true})),
+  march:()=>art(K.sky,M.sun(70,36),field(),M.road(),M.banner(),M.people(110,166,12,{gap:20})),
+  rising:()=>art(K.night,M.stars(),M.moon(80,40),M.hills('#1f2a40','#141b2b'),M.people(40,160,18,{gap:21,color:'#141b2b',torch:true})),
+  printer:()=>art('#5f574f',M.press(),M.people(330,132,1,{color:K.stone}))
+};
+const ERA_ART={
+  title:()=>art(K.dusk,M.sun(220,96),M.hills('#b0603e','#7a3d22'),M.house(70,136,K.red,1),M.house(300,140,K.blue,1),`<path d="M220 112 L220 56" ${O}/><path d="M222 58 L262 66 L222 76 Z" fill="${K.red}" ${O}/>`),
+  ratify:()=>art(K.wall,M.interior(),M.people(110,104,12,{gap:20}),M.table(),M.scroll()),
+  mid:()=>art(K.dusk,M.sun(360,100),M.hills('#b0603e','#7a3d22'),M.house(150,138,K.red,1),M.tree(80,140),M.tree(330,142)),
+  end:()=>art('#e88a5a',M.sun(220,110),M.hills('#a85a40','#5a2a20'),`<path d="M120 132 L120 104 Q132 92 144 104 L144 132 Z M164 134 L164 106 Q176 94 188 106 L188 134 Z" fill="${K.stone}" ${O}/>`,M.people(250,140,3,{gap:22}))
+};
+
+// ═══════════════════════════════════════════════════════════
+// BOARD + FAMILY (always in view)
+// ═══════════════════════════════════════════════════════════
+const pos = v => `calc(${v}% - ${v*0.16}px)`;
+function buildBoard(){
+  $('board').innerHTML=METERS.map(mt=>`<div class="track"><div class="n"><b>${mt.n}</b><span><span class="w" id="w-${mt.k}"></span><span class="d" id="d-${mt.k}"></span></span></div>
+    <div class="lane"><div class="mark" id="mk-${mt.k}"></div><div class="prev" id="p-${mt.k}"></div><div class="cube" id="c-${mt.k}" style="background:${METER_COLORS[mt.k]};left:${pos(50)}"></div></div></div>`).join('');
+}
+let shown={};
+function updateBoard(preview, markAt){
+  let moved=0;
+  METERS.forEach(mt=>{
+    if(shown[mt.k]!==undefined&&shown[mt.k]!==state.m[mt.k]) sfx.cube(moved++*.07);
+    shown[mt.k]=state.m[mt.k];
+    const v=state.m[mt.k], p=preview?preview[mt.k]:undefined;
+    $('c-'+mt.k).style.left=pos(v);
+    const pe=$('p-'+mt.k), de=$('d-'+mt.k);
+    if(p!==undefined&&p!==v){ pe.style.display='block'; pe.style.left=pos(p); de.textContent=(p>v?'+':'')+(p-v); de.className='d '+(p>v?'up':'dn'); $('w-'+mt.k).textContent=word(mt,p); }
+    else { pe.style.display='none'; de.textContent=''; $('w-'+mt.k).textContent=word(mt,v); }
+    const mk=$('mk-'+mt.k);
+    if(markAt){ mk.style.display='block'; mk.style.left=`calc(${markAt[mt.k]}% - ${markAt[mt.k]*0.02}px)`; } else mk.style.display='none';
+  });
+}
+function previewOf(e,g){
+  const out={...state.m};
+  for(const k in (e||{})) out[k]=clamp(out[k]+e[k]);
+  state.nation.tags.forEach(t=>{ if(g&&g[t]) for(const k in g[t]) out[k]=clamp(out[k]+g[t][k]); });
+  return out;
+}
+function setYear(y){
+  $('year').textContent=y;
+  const marks=(state.queue||[]).map(c=>c.year);
+  const done=state.used?[...state.used].map(id=>CRISES.find(c=>c.id===id).year):[];
+  const all=[...new Set([...done,...marks,25])].sort((a,b)=>a-b);
+  $('ytrack').innerHTML=all.map(x=>`<i class="${x<=y?'done':''}" style="left:${(x-1)/49*100}%"></i>`).join('')+`<div class="now" style="left:${(y-1)/49*100}%"></div>`;
+}
+let knownFaults=[];
+function updateFaults(){
+  const fs=activeFaults();
+  if(fs.some(t=>!knownFaults.includes(t))) sfx.thud(.15);
+  $('faults').innerHTML=fs.length?`<div class="label">Fault lines</div>`+fs.map(t=>`<div class="fault ${knownFaults.includes(t)?'':'new'}">${t}</div>`).join(''):'';
+  $('fault-chip').textContent=fs.length?`⟋ ${fs.length} fault line${fs.length>1?'s':''} ▾`:'';
+  knownFaults=fs;
+}
+const MEEPLE=c=>`<svg viewBox="0 0 36 40"><path d="M18 2 a7 7 0 1 1 0 14 a7 7 0 1 1 0 -14 M6 38 L8 22 Q18 16 28 22 L30 38 Z" fill="${c}"/></svg>`;
+const STONE=`<svg viewBox="0 0 36 40"><path d="M8 38 L8 14 Q18 0 28 14 L28 38 Z" fill="#cfc4b1"/><path d="M18 10 L18 26 M12 16 L24 16" stroke="#5c564c" stroke-width="3"/></svg>`;
+function buildFamily(){
+  $('fam').innerHTML=ROLES.map(r=>{ const m=state.family.members[ROLE_IDX[r]];
+    return `<div class="meeple" id="m-${r}"><div class="row"><span id="ic-${r}">${MEEPLE(COLORS[r])}</span><div><b id="nm-${r}"></b><span class="role">${m.role.split(' — ')[0]} · ${m.role.split(' — ')[1]||''}</span></div></div><div class="bubble" id="b-${r}"></div></div>`; }).join('');
+  updateAges();
+  ROLES.forEach(r=>{
+    $('m-'+r).onclick=()=>{ if(narrow()&&lastSaid[r]) say(r,...lastSaid[r]); };
+    $('b-'+r).onclick=e=>{ if(narrow()){ e.stopPropagation(); $('b-'+r).className='bubble'; } };
+  });
+}
+const famInline=(fn)=>`<div class="inline-only inline-fam">${ROLES.map(r=>`<p><b>${first(r)}.</b> ${fn(r)}</p>`).join('')}</div>`;
+function updateAges(dead=[]){
+  ROLES.forEach(r=>{ const m=state.family.members[ROLE_IDX[r]]; $('nm-'+r).textContent=`${m.name} · ${dead.includes(r)?'†':ageAt(r,state.year)}`; $('ic-'+r).innerHTML=dead.includes(r)?STONE:MEEPLE(COLORS[r]); });
+}
+const narrow=()=>matchMedia('(max-width:1020px)').matches;
+const lastSaid={};
+function say(r,text,kind='say'){ if(!r) return; lastSaid[r]=[text,kind]; if(narrow()&&kind!=='fate') hush(r); const b=$('b-'+r); b.className='bubble '+kind; b.innerHTML=text; sfx.pop(); void b.offsetWidth; b.classList.add('show'); $('m-'+r).classList.toggle('lit',kind==='impact'); }
+function hush(except){ ROLES.forEach(r=>{ if(r!==except){ $('b-'+r).className='bubble'; $('m-'+r).classList.remove('lit'); } }); }
+const speakerFor = raw => { const m=raw.match(/\{([FMSD])\}/); return m?m[1]:null; };
+
+// ═══════════════════════════════════════════════════════════
+// SOUND — synthesized table noises (no audio files)
+// ═══════════════════════════════════════════════════════════
+const SFX={on:true,ctx:null,noise:null};
+try{ SFX.on=localStorage.getItem('nb-tt-sound')!=='off'; }catch(e){}
+function actx(){ if(!SFX.ctx){ try{ SFX.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(SFX.ctx.state==='suspended') SFX.ctx.resume(); return SFX.ctx; }
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,actx,{capture:true}));
+const live=()=>SFX.on&&SFX.ctx&&SFX.ctx.state==='running';
+function burst({at=0,dur=.06,type='bandpass',freq=2000,sweep,q=1,vol=.2}){
+  if(!live()) return; const c=SFX.ctx, t=c.currentTime+at;
+  if(!SFX.noise){ const b=c.createBuffer(1,c.sampleRate*.5,c.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; SFX.noise=b; }
+  const s=c.createBufferSource(), f=c.createBiquadFilter(), g=c.createGain(); s.buffer=SFX.noise; f.type=type; f.Q.value=q;
+  f.frequency.setValueAtTime(freq,t); if(sweep) f.frequency.exponentialRampToValueAtTime(sweep,t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur); s.connect(f).connect(g).connect(c.destination); s.start(t); s.stop(t+dur+.02);
+}
+function tone({at=0,f=440,f2,dur=.1,type='sine',vol=.15}){
+  if(!live()) return; const c=SFX.ctx, t=c.currentTime+at, o=c.createOscillator(), g=c.createGain(); o.type=type;
+  o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+.02);
+}
+const sfx={
+  deal:(at=0)=>burst({at,dur:.16,freq:900,sweep:3600,q:.7,vol:.1}),
+  draw:()=>{ burst({dur:.35,freq:500,sweep:2600,q:.5,vol:.12}); burst({at:.5,dur:.05,type:'highpass',freq:2200,vol:.18}); tone({at:.5,f:150,f2:80,dur:.08,type:'triangle',vol:.15}); },
+  snap:(at=0)=>{ burst({at,dur:.04,type:'highpass',freq:2500,vol:.22}); tone({at,f:190,f2:90,dur:.08,type:'triangle',vol:.2}); },
+  select:()=>tone({f:520,f2:640,dur:.05,type:'triangle',vol:.06}),
+  cube:(at=0)=>{ tone({at,f:1900,f2:1500,dur:.025,type:'square',vol:.025}); tone({at:at+.03,f:1600,f2:1300,dur:.025,type:'square',vol:.02}); },
+  thud:(at=0)=>tone({at,f:110,f2:50,dur:.4,vol:.32}),
+  pop:(at=0)=>tone({at,f:620,f2:930,dur:.07,vol:.05})
+};
+function setSfx(on){ SFX.on=on; $('snd').textContent=on?'♪ On':'♪ Off'; try{ localStorage.setItem('nb-tt-sound',on?'on':'off'); }catch(e){} }
+$('snd').onclick=e=>{ setSfx(!SFX.on); e.currentTarget.blur(); };
+setSfx(SFX.on);
+
+// ═══════════════════════════════════════════════════════════
+// CRISIS VOICES — a family member reacts as each crisis is drawn
+// ═══════════════════════════════════════════════════════════
+const VOICES={
+  plague:()=>({r:"M",q:"I've delivered three babies in the harbour this month. Close it. Close it today, whatever the merchants say."}),
+  road:()=>({r:"F",q:"A barn full of grain and no road to sell it on. They can wait us out. Can we wait them out?"}),
+  landgrab:()=>({r:"S",q:"Grandfather's musket still fires. I'm only saying it still fires."}),
+  school:()=>({r:"D",q:"Delia taught me to read. Who teaches the ones after me?"}),
+  badyear:()=>({r:"M",q:"The clerk wrote our name in a book. I'd like to know what the book is for."}),
+  nativism:()=>({r:"D",q:"Amara asked me if her family will have to leave. I said no. Was I lying?"}),
+  petition:()=>({r:"S",q:"Forty-seven of them signed it. They used the founding document's own words. I watched them do it."}),
+  tariff:()=>({r:"F",q:"Two customs houses in thirty miles. When I was young we called that a foreign country."}),
+  flood:()=>({r:"F",q:"[[I helped one of those families rebuild after the last flood. This time there's nothing left to rebuild.||Forty houses. Ours was one of them.]]"}),
+  veterans:h=>(h.has("S_soldier")||h.fam.sonSoldier)?{r:"S",q:"I have the papers. I have the medal. I don't have the land."}:{r:"F",q:"Tomas sleeps in our barn. He fought so we could have a country. The country owes him forty acres."},
+  strike:()=>({r:"S",q:"Six hundred of us walked out. If we go back now, we go back for less. For good."}),
+  succession:()=>({r:"M",q:"It always matters who wins. Most of all when nobody wrote down how they're supposed to."}),
+  march:()=>({r:"M",q:"Nine days' walk. My feet will manage. It's the forty years of never being asked that hurt."}),
+  rising:()=>({r:"D",q:"The document says all persons. I'd like someone to tell me which word they don't understand."}),
+  printer:()=>({r:"D",q:"Osric printed what everyone already knew. Now we find out whether knowing it is a crime."})
+};
+
+// ═══════════════════════════════════════════════════════════
+// CARDS
+// ═══════════════════════════════════════════════════════════
+const NAMES=Object.fromEntries(METERS.map(m=>[m.k,m.n]));
+function fxTags(e,g){
+  const tot={...(e||{})}; state.nation.tags.forEach(t=>{ if(g&&g[t]) for(const k in g[t]) tot[k]=(tot[k]||0)+g[t][k]; });
+  const ks=Object.keys(tot).filter(k=>tot[k]).sort((a,b)=>Math.abs(tot[b])-Math.abs(tot[a]));
+  if(!ks.length) return `<span class="none">No immediate change</span>`;
+  return ks.map(k=>`<span class="${tot[k]>0?'up':'dn'}">${NAMES[k]} ${tot[k]>0?(tot[k]>=10?'▲▲':'▲'):(tot[k]<=-10?'▼▼':'▼')}</span>`).join('');
+}
+let handDelay=0;
+function hand(choices,color,delay=0){
+  const n=choices.length, mid=(n-1)/2; handDelay=delay;
+  return `<div class="hand" id="hand">${choices.map((c,i)=>`<button class="pc" data-i="${i}" style="transform:rotate(${(i-mid)*7}deg) translateY(${Math.abs(i-mid)*10}px);animation-delay:${.15+delay+i*.07}s"><div class="in"><span class="k" style="background:${color}">${i+1}</span><div class="t">${T(c.l)}</div><div class="c">${T(c.c)}</div><div class="fx">${fxTags(c.e,c.g)}</div></div></button>`).join('')}</div>
+  <div class="played" id="played"><div class="x" id="played-x"></div><button class="primary" id="play-btn">Play this card</button></div>`;
+}
+function wireHand(choices,{onSelect,onPlay}){
+  const cards=[...document.querySelectorAll('#hand .pc')]; let sel=null;
+  const play=i=>{ sfx.snap(); onPlay(i); };
+  cards.forEach((_,i)=>sfx.deal(.15+i*.07+(handDelay||0)));
+  const preview=i=>updateBoard(i==null?null:previewOf(choices[i].e,choices[i].g));
+  cards.forEach((card,i)=>{
+    card.onmouseenter=()=>preview(i);
+    card.onmouseleave=()=>preview(sel);
+    card.onclick=()=>{ if(sel===i){ play(i); return; } sel=i; sfx.select(); cards.forEach(c=>c.classList.toggle('on',c===card)); preview(i); $('played').classList.add('show'); onSelect(i); };
+  });
+  $('play-btn').onclick=()=>{ if(sel!=null) play(sel); };
+  keyHandler=e=>{ const n=+e.key; if(n>=1&&n<=cards.length){ if(sel!==n-1) cards[n-1].click(); } else if(e.key==='Enter'&&sel!=null){ e.preventDefault(); play(sel); } };
+}
+function center(html){ $('center').innerHTML=html; window.scrollTo({top:0,behavior:'smooth'}); }
+let keyHandler=null;
+document.addEventListener('keydown',e=>{ if(e.metaKey||e.ctrlKey||e.altKey) return; if(keyHandler) keyHandler(e); });
+function primaryKeys(){ keyHandler=e=>{ if(e.key==='Enter'){ const b=document.querySelector('#center .primary'); if(b){ e.preventDefault(); b.click(); } } }; }
+const paras = html => html.split(/<\/?p>/).map(s=>s.trim()).filter(Boolean).map(s=>`<p>${s}</p>`).join('');
+
+// ═══════════════════════════════════════════════════════════
+// GAME FLOW
+// ═══════════════════════════════════════════════════════════
+function newGame(){
+  state=newState(rnd(NATIONS), rnd(FAMILIES)); state.queue=[]; knownFaults=[]; shown={};
+  state.m={...state.nation.base};
+  $('top-sub').textContent=`${state.nation.name} · the ${state.family.surname} family`;
+  $('board-label').textContent=`${state.nation.name} · State of the Nation`;
+  $('fam-label').textContent=`The ${state.family.surname} Family`;
+  buildBoard(); buildFamily(); updateBoard(); setYear(1); $('faults').innerHTML='';
+  const N=state.nation;
+  center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--teal)"><span>Your nation</span><span>Year One</span></div><div class="art">${GEO_ART[N.icon]()}</div></div>
+    <h1>${N.name}</h1><div class="story"><p><em>${N.desc}.</em> Independence has been won and the old order is gone. Who holds power, how people eat, how disputes are settled: all of it is now yours to decide.</p></div>
+    <dl class="geo">${Object.entries(N.geo).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+    <div class="note"><b>How to play</b>Ten founding cards, then fifty years of crises. Hover a card to see where the nation's cubes would move; click to choose, click again (or press Enter) to play. Your family will tell you what they think.</div>
+    <div class="actions"><button class="primary" onclick="showQuestion(0)">Begin the founding →</button></div></div>`);
+  ROLES.forEach((r,i)=>setTimeout(()=>say(r,state.family.members[ROLE_IDX[r]].desc,'say'),300+i*180));
+  primaryKeys();
+}
+
+// live founding state: everything played so far
+function recomputeFounding(upto){
+  state.m={...state.nation.base}; state.flags=new Set(); state.flagYear={};
+  for(let i=0;i<upto;i++){ const c=QUESTIONS[i].choices[state.answers[i]]; applyEffects(c.e); state.nation.tags.forEach(t=>{ if(c.g&&c.g[t]) applyEffects(c.g[t]); }); addFlags(c.f); }
+}
+function showQuestion(qi){
+  state.qi=qi; state.year=1; recomputeFounding(qi); updateBoard(); updateFaults(); setYear(1);
+  const q=QUESTIONS[qi], col=CAT_COLORS[q.cat], tag=state.nation.tags.find(t=>q.geo&&q.geo[t]);
+  center(`<div class="card deal" style="transform:rotate(-1deg)"><div class="frame"><div class="band" style="background:${col}"><span>Founding · ${q.cat}</span><span>${qi+1} of 10</span></div><div class="art">${Q_ART[q.cat]()}</div></div>
+    <h1 class="q">${q.title}</h1><div class="story"><p>${T(q.ctx)}</p></div>
+    ${tag?`<div class="note"><b>In ${state.nation.name}</b>${T(q.geo[tag])}</div>`:''}
+    ${qi>0?`<div class="actions" style="justify-content:flex-start;padding-top:4px"><button class="link" onclick="showQuestion(${qi-1})">← Back to ${QUESTIONS[qi-1].cat}</button></div>`:''}
+  </div>${hand(q.choices,col)}`);
+  hush(); say(q.witness.r,`“${T(q.witness.q)}”`,'say');
+  wireHand(q.choices,{
+    onSelect:i=>{ const c=q.choices[i], sp=speakerFor(c.fi)||q.witness.r; hush(sp); say(sp,T(c.fi),'impact'); $('played-x').innerHTML=`<b>Sets in motion</b>${T(c.x)}`; },
+    onPlay:i=>{ state.answers[qi]=i; recomputeFounding(qi+1); updateBoard(); updateFaults(); if(qi<9) showQuestion(qi+1); else ratify(); }
+  });
+}
+
+function ratify(){
+  ratifyState(); updateBoard(); updateFaults(); hush();
+  center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--ink)"><span>The founding is ratified</span><span>Year One</span></div><div class="art">${ERA_ART.ratify()}</div></div>
+    <h1>What you have made</h1><div class="story"><p>${foundingSentence()}</p></div>
+    <div class="note"><b>On the board</b>The cubes show where ${state.nation.name} begins. The red cards at left are the fault lines in its founding; crises will find them.</div>
+    <div class="actions"><button class="primary" onclick="startEra(2)">Draw the first crisis →</button></div></div>`);
+  primaryKeys();
+}
+
+function startEra(era){ state.era=era; state.queue=pickCrises(era); state.ci=0; setYear(state.year); nextCrisis(); }
+function nextCrisis(){
+  if(state.ci>=state.queue.length) return state.era===2?midpoint():epilogue();
+  const cr=state.queue[state.ci], h=H(); state.used.add(cr.id); state.year=cr.year;
+  setYear(cr.year); updateAges(); updateBoard(); hush();
+  sfx.draw();
+  center(`<div class="card draw" style="transform:rotate(-1.2deg)"><div class="frame"><div class="band" style="background:var(--red)"><span>Crisis · ${cr.type}</span><span>Year ${cr.year}</span></div><div class="art">${CRISIS_ART[cr.id]()}</div></div>
+    <h1>${cr.title}</h1><div class="story">${paras(T(cr.story(h)))}</div>
+    <div class="note"><b>Why this card was drawn</b>${T(cr.cause(h))}<br><span style="opacity:.75">${cr.insp}</span></div></div>${hand(cr.choices,'var(--red)',.6)}`);
+  const v=VOICES[cr.id]&&VOICES[cr.id](h); if(v) setTimeout(()=>say(v.r,`“${T(v.q)}”`,'say'),900);
+  wireHand(cr.choices,{
+    onSelect:()=>{ $('played-x').innerHTML=`<b>${state.nation.name} must choose</b>Click again or press Enter to play this card.`; },
+    onPlay:i=>{
+      const c=applyCrisisChoice(cr,i); updateBoard(); updateFaults();
+      const sp=speakerFor(c.fam); hush(sp); if(sp) say(sp,T(c.fam),'impact');
+      center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--ink)"><span>${cr.title} · what happened</span><span>Year ${cr.year}</span></div></div>
+        <h1 class="q">${T(c.l)}</h1><div class="story"><p>${T(c.after)}</p></div>
+        ${sp?'':`<div class="note"><b>The ${state.family.surname} family</b>${T(c.fam)}</div>`}
+        <div class="actions"><button class="primary" onclick="state.ci++;nextCrisis()">${state.ci===state.queue.length-1?(state.era===2?'Twenty-five years on →':'Fifty years on →'):'Draw the next crisis →'}</button></div></div>`);
+      primaryKeys();
+    }
+  });
+}
+
+function midpoint(){
+  state.year=25; state.snapshots[25]={...state.m}; setYear(25); updateAges(); updateBoard(null,state.snapshots[1]);
+  center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--gold);color:var(--ink)"><span>A generation in</span><span>Year 25</span></div><div class="art">${ERA_ART.mid()}</div></div>
+    <h1>Twenty-five years on</h1><div class="story"><p>The founders are old men now, or gone. The children who were small at the founding are grown, with opinions of their own about what was decided on their behalf.</p></div>
+    <div class="note"><b>On the board</b>The thin line on each track marks where ${state.nation.name} stood in Year One. Your family has news.</div>${famInline(r=>T(vignette(r)))}
+    <div class="actions"><button class="primary" onclick="startEra(3)">The second generation →</button></div></div>`);
+  ROLES.forEach((r,i)=>setTimeout(()=>say(r,T(vignette(r)),'say'),250+i*200));
+  primaryKeys();
+}
+
+function epilogue(){
+  state.year=50; setYear(50); const v=verdict();
+  updateAges(["F","M"]); updateBoard(null,state.snapshots[1]); hush();
+  ROLES.forEach((r,i)=>setTimeout(()=>say(r,T(fate(r)),'fate'),300+i*250));
+  const show=tab=>center(`<div class="card ${tab?'':'deal'}"><div class="frame"><div class="band" style="background:var(--plum)"><span>Fifty years on</span><span>Year 50</span></div><div class="art">${ERA_ART.end()}</div></div>
+    <h1>${v.t}</h1>
+    ${tab==='record'
+      ? `<div class="record">${state.log.map(e=>`<div class="r"><div class="k">${e.k}</div><div>${e.t?`<small>${e.t}</small>`:''}${e.v}</div></div>`).join('')}</div>`
+      : `<div class="verdict">${v.p}</div><div class="note"><b>The family</b>Their stories are beside their names. The line on each track marks Year One.</div>${famInline(r=>T(fate(r)))}`}
+    <div class="actions"><button class="link" onclick="(${tab==='record'?'epShow()':"epShow('record')"})">${tab==='record'?'← Back to the ending':'Read the record'}</button><button class="primary" onclick="newGame()">Build another nation →</button></div></div>`);
+  window.epShow=show; show(); primaryKeys();
+}
+
+newGame();
+</script>
+</body>
+</html>

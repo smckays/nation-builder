@@ -1,5 +1,7 @@
 # Nation Builder
 
+**Play it:** https://smckays.github.io/nation-builder/
+
 A single-file narrative game about founding a nation and following one family across fifty years.
 
 Two front ends share one engine:
@@ -20,3 +22,7 @@ Open either page in a browser. No build step.
 - **Year 25 interlude and Year 50 epilogue:** a ledger of the nation, a fate for each family member computed from the measures and flags, and a verdict on the nation.
 
 All family text uses role tokens (`{F}` `{M}` `{S}` `{D}`, `{fam}`, `[[landed||landless]]`), so any family fits any line. Keys 1–4 choose, Enter continues (retro also takes ↑/↓ and Space).
+
+## Publishing
+
+Pushing to `main` deploys the tabletop version to GitHub Pages (`.github/workflows/pages.yml`). The site contains only `tabletop.html` (served as `index.html`) and `engine.js`; the other versions stay in the repo but are not published.

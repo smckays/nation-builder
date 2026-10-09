@@ -319,7 +319,8 @@ const FAULTS = [
 
 // ═══════════════════════════════════════════════════════════
 // CRISES — each has era, year, weight w(h) (≥100 = forced),
-// a cause line (why this arrived), story, choices with effects.
+// a cause line (why this arrived), story, a voice (a family member's
+// reaction as the crisis arrives, {r: role, q: line}), choices with effects.
 // choice: l c e f · after (what happened) · fam (what it meant for the family)
 // ═══════════════════════════════════════════════════════════
 const CRISES = [
@@ -329,6 +330,7 @@ const CRISES = [
     cause:h=>"Arrived because {nation} is a port nation"+((h.has("propertyVote")||h.has("councilDynasty")||h.has("federation"))?", and its government decides slowly.":"."),
     story:h=>`<p>A ship came in on a Tuesday. By Thursday the harbour district smelled wrong. The apothecary knew what it was before the government did, and sent word: close the harbour, seal the district, do it now.</p><p>The message sat nine days on a clerk's desk while the merchants explained what a closed harbour would cost. The trading season is short. Most of the sick are poor, and none of them were in the room.</p><p>{M} was called to three births in the harbour district that month. Each time she came home she washed her hands twice and said nothing about where she'd been.</p>`,
     insp:"Inspired by the 1793 Philadelphia yellow fever epidemic and the cholera years in port cities.",
+    voice:()=>({r:"M",q:"I've delivered three babies in the harbour this month. Close it. Close it today, whatever the merchants say."}),
     choices:[
       {l:"Close the harbour and seal the district", c:"The fever is contained. The trading season is lost.", e:{pros:-10,leg:5,inst:5},
        after:"Four hundred fall sick, and the fever stops at the district wall. The merchants never forgive the council; several councillors lose their seats.",
@@ -345,6 +347,7 @@ const CRISES = [
     cause:h=>"Arrived because everything {nation} trades must cross a neighbour's land.",
     story:h=>`<p>In the ninth year the neighbour to the east closed the road. No declaration, no shots — just a line of soldiers at the river crossing and a letter explaining that {nation}'s grain would now pay a toll of one part in four.</p><p>Within a month the price of salt has doubled and the price of grain has halved.</p><p>{F} has a barn full of harvest he cannot sell. {S} has been talking to the recruiting sergeant who sets up a table outside the inn every market day.</p>`,
     insp:"Inspired by the trade blockades faced by landlocked states, from 19th-century Paraguay to modern customs wars.",
+    voice:()=>({r:"F",q:"A barn full of grain and no road to sell it on. They can wait us out. Can we wait them out?"}),
     choices:[
       {l:"Pay the toll and negotiate a treaty", c:"Trade resumes. The neighbour learns what {nation} will tolerate.", e:{pros:-8,leg:-5,coh:-5},
        after:"A treaty brings the toll down to one part in six. The minister who signed it is hanged in effigy in two market towns.",
@@ -361,6 +364,7 @@ const CRISES = [
     cause:h=>h.has("noLandRules")?"Arrived because the founding left land without rules.":"Arrived because the state's land became a prize.",
     story:h=>`<p>The surveyors arrived with chains, stakes, and twenty men with rifles. They work for the Northern Land Company, which holds a paper from someone in the capital. The paper is either a grant or a forgery, and no office in {nation} can say which.</p><p>They staked out the valley in nine days, including fields families have worked since before independence. Asked by what right, the foreman pointed at the rifles.</p><p>{F} walked out to the stake they drove at the edge of [[{Fhold}||the field he leases]] and stood there a long time. That evening {S} cleaned his grandfather's musket, and {M} watched him do it.</p>`,
     insp:"Inspired by the Yazoo land fraud, the enclosure of common land, and frontier land companies.",
+    voice:()=>({r:"S",q:"Grandfather's musket still fires. I'm only saying it still fires."}),
     choices:[
       {l:"Create a land registry — first recorded claim wins", c:"Order, quickly. The company has lawyers.", e:{inst:10,eq:-10}, f:["landRegistry"],
        after:"The registry opens in spring. The company's clerks are waiting at the door on opening day.",
@@ -377,6 +381,7 @@ const CRISES = [
     cause:h=>"Arrived because the schools have public money, and "+(h.has("separation")?"even separated powers have seams.":"little stands between that money and the men who want it."),
     story:h=>`<p>A woman named Delia ran the valley school for nine years. She taught a hundred and forty children to read, including {D}.</p><p>The new district administrator arrived last spring — the brother-in-law of a councillor. He redirected the school's funding to a road that runs through land he owns. Delia appealed. The councillor whose brother-in-law is the administrator chairs the appeals committee. The school closed in autumn.</p><p>{D} came home and told {M}. {M} was quiet a long time. Then she said, "We'll find another way." Her voice was tired when she said it.</p>`,
     insp:"Inspired by machine politics in 19th-century American cities and the defunding of Reconstruction-era schools.",
+    voice:()=>({r:"D",q:"Delia taught me to read. Who teaches the ones after me?"}),
     choices:[
       {l:"Establish an independent oversight body", c:"Future Delias have somewhere to appeal. This school stays closed for now.", e:{inst:15,leg:5}, f:["oversight"],
        after:"An inspectorate is created with power to audit any office. The administrator is removed two years later. The school reopens after three.",
@@ -397,6 +402,7 @@ const CRISES = [
         : "No rain fell from April to September. The wells went first, then the river, then everyone's patience.";
       return `<p>${open} The harvest will be a quarter of what the {fam} family needs. [[The ox was sold in July to pay the tax on {Fhold}.||The ox was sold in July to pay the lease.]]</p><p>{M} walked three miles to the district office to ask for relief. The clerk said the emergency fund had been spent on roads. He was sorry. He wrote the family's name in a book.</p><p>The district's largest landowner has a deep well that still runs. He sells water at a price no one in the valley can pay. {S} has heard about men in other districts who stopped asking politely.</p>`;},
     insp:"Inspired by the Dust Bowl, the Irish Famine land clearances, and the American farm foreclosures of the 1930s.",
+    voice:()=>({r:"M",q:"The clerk wrote our name in a book. I'd like to know what the book is for."}),
     choices:[
       {l:"Open the treasury — emergency relief", c:"The small farms survive. Every future hard year arrives as a political demand.", e:{eq:8,pros:-8,leg:10}, f:["reliefPrecedent"],
        after:"Relief arrives in October. Most small farms survive the winter. From now on, every bad year arrives at the capital as a demand.",
@@ -417,6 +423,7 @@ const CRISES = [
         : "There is no path in the law for a man like him to become a citizen.";
       return `<p>A man named Yusuf came here twelve years ago with a letter of introduction and a talent for metalwork. He built a shop, employs four people, pays his taxes, and is raising two daughters born in this nation. ${status}</p><p>A poor harvest made the valley angry. Someone in the market started saying there isn't enough because people like Yusuf are taking it. It isn't true. But it is simple. Last Tuesday, his shop window was broken.</p><p>{D} plays with Yusuf's daughter Amara. She asked {F} why Amara's family wasn't safe here. He said of course they're safe. {D} looked at him as if she were waiting for the rest of the answer.</p>`;},
     insp:"Inspired by the Chinese Exclusion Act, anti-Jewish laws in 19th-century Europe, and scapegoating in hard economic times.",
+    voice:()=>({r:"D",q:"Amara asked me if her family will have to leave. I said no. Was I lying?"}),
     choices:[
       {l:"Make the path to citizenship clear and fair", c:"Yusuf gains legal standing. The anger looks for another target.", e:{inc:10,coh:-5,leg:5}, f:["yusufCitizen"],
        after:"Yusuf takes the oath in the spring. The anger finds another target, as anger does — but he has standing now, and so will his daughters.",
@@ -435,6 +442,7 @@ const CRISES = [
       ? `<p>A man named Cassius was born in this nation, on land his father cleared and was not permitted to own. He taught himself to read from a stolen primer. He has organised forty-seven others and written a petition to the government, citing the founding document's own words.</p><p>The government must now decide whether Cassius and the forty-seven are persons under the law.</p><p>{S} was at the meeting where the petition was drafted. He came home and couldn't sleep. {F} told him to stay out of it. {M} said nothing, which is not the same as agreeing.</p>`
       : `<p>A man named Cassius was born under his father's indenture. The contract was for seven years; fines for illness, broken tools and "insolence" extended it to thirty-one, and on his father's death the balance passed to him. He taught himself to read and has organised forty-seven others in the same position.</p><p>Their petition asks one thing: that no child inherit a parent's contract.</p><p>{S} was at the meeting where the petition was drafted. He came home and couldn't sleep. {F} told him to stay out of it. {M} said nothing, which is not the same as agreeing.</p>`,
     insp:"Inspired by the free Black petitions to early American legislatures, Frederick Douglass, and Dred Scott.",
+    voice:()=>({r:"S",q:"Forty-seven of them signed it. They used the founding document's own words. I watched them do it."}),
     choices:[
       {l:"Honour the founding document — grant them standing", c:"Cassius becomes a citizen. Every arrangement that depended on his exclusion must be renegotiated.", e:{inc:20,pros:-10,coh:-10,leg:10}, f:["abolished"],
        after:"The vote passes by four. The economic order built on Cassius's exclusion begins to come apart, and its owners do not go quietly.",
@@ -451,6 +459,7 @@ const CRISES = [
     cause:h=>"Arrived because the federation's provinces want opposite things from trade.",
     story:h=>`<p>The coastal provinces want open ports and cheap imports. The interior provinces want tariffs to protect their mills. Under the federation each may set its own duties — so the interior now taxes coastal goods, and the coast has answered in kind.</p><p>There are customs houses on roads that had no gates a year ago. A cart of grain crossing two provincial lines pays twice before it reaches the sea.</p><p>{F} took a load to the provincial market and came home with less than he left with. The governor of the next province has begun speaking of "our people" and "theirs."</p>`,
     insp:"Inspired by the trade wars between states under the American Articles of Confederation, and the Nullification Crisis.",
+    voice:()=>({r:"F",q:"Two customs houses in thirty miles. When I was young we called that a foreign country."}),
     choices:[
       {l:"Negotiate a national compromise", c:"Everyone gives up something. Everyone resents it.", e:{coh:5,pros:-3,leg:3},
        after:"A single schedule of duties is agreed after nine months. No province is satisfied, which is how everyone knows it is fair.",
@@ -469,6 +478,7 @@ const CRISES = [
     cause:h=>"Arrived because private land and cheap labour make tenants easy to replace.",
     story:h=>`<p>The river flooded in March and took forty houses with it. The families who lived there had farmed the same land as tenants for two generations. The land belongs to a man in the capital who has never seen it.</p><p>After the flood, the landowner decided not to rebuild the tenant houses. The land is worth more without them. He will bring in seasonal workers instead.</p><p>[[{F} knows three of the forty families. He helped one of them rebuild after the last flood. He has been asked to speak at the town meeting, and is trying to decide whether saying anything will matter.||The {fam} family's house is one of the forty. {F} has been asked to speak for the tenants at the town meeting. He has never spoken in public in his life.]]</p>`,
     insp:"Inspired by the Highland Clearances, The Grapes of Wrath, and the land consolidation after the 1927 Mississippi flood.",
+    voice:()=>({r:"F",q:"[[I helped one of those families rebuild after the last flood. This time there's nothing left to rebuild.||Forty houses. Ours was one of them.]]"}),
     choices:[
       {l:"Compulsory purchase — the state buys the land and resettles the families", c:"The families stay. Property rights are no longer absolute in a crisis.", e:{eq:10,pros:-5,inst:5}, f:["eminentDomain","F_ownsLand"],
        after:"The families stay. A precedent is set that property can be taken for the public good — and it will be used again, not always this kindly.",
@@ -487,6 +497,7 @@ const CRISES = [
       const vet = h.has("S_soldier")||h.fam.sonSoldier;
       return `<p>${h.has("borderWar")?"The men who fought to open the road":"The men who fought for independence"} were promised land — forty acres each on the western frontier.</p><p>${vet?"{S}":"{S}'s friend Tomas"} arrived at the land office with his discharge papers. The clerk said the land had been allocated to a development company. A clerical error. There is a process for appeals; it takes two years.</p><p>${vet?"{S} slept in a barn that winter":"Tomas slept in {F}'s barn that winter"}, and there were hundreds like him. {F} wrote to the government. The letter was acknowledged. Nothing else happened. Some of the men are no longer waiting quietly.</p>`;},
     insp:"Inspired by the Bonus Army of 1932, unpaid Revolutionary War veterans, and Shays' Rebellion.",
+    voice:h=>(h.has("S_soldier")||h.fam.sonSoldier)?{r:"S",q:"I have the papers. I have the medal. I don't have the land."}:{r:"F",q:"Tomas sleeps in our barn. He fought so we could have a country. The country owes him forty acres."},
     choices:[
       {l:"Honour the grants — find and restore the promised land", c:"Expensive and slow. The nation keeps its word.", e:{pros:-10,leg:10,eq:5}, f:["veteransHonored"],
        after:"It takes three years and a special tax, but every grant is honoured. The development company is compensated with less than it wanted.",
@@ -503,6 +514,7 @@ const CRISES = [
     cause:h=>h.has("freeLabor")?"Arrived because workers who bargain alone eventually stop bargaining alone.":"Arrived because work is plentiful and wages are not.",
     story:h=>`<p>The owners of {Swork} cut wages by a third in the slack season and did not restore them in the busy one. Six hundred men walked out on a Monday.</p><p>${h.has("coerced")&&!h.has("abolished")?"By Wednesday the owners had rented bonded labourers to take their places. The strikers watched men who could not refuse do the work they had refused.":"By Wednesday the owners had brought in replacements from three provinces away, with hired guards to walk them through the gates."}</p><p>{S} is on the strike committee. {M} has started keeping the door barred at night. {F} says the owners have a right to run their business; then he asks {S} if he's eaten.</p>`,
     insp:"Inspired by the Pullman Strike, the Homestead Strike, and the Tolpuddle Martyrs.",
+    voice:()=>({r:"S",q:"Six hundred of us walked out. If we go back now, we go back for less. For good."}),
     choices:[
       {l:"Recognise the right to organise", c:"The strike ends with a contract. The owners call it theft.", e:{eq:12,pros:-5,leg:5}, f:["unions"],
        after:"The owners sign a contract in the fourth week. Wages return. Within ten years every trade in the nation has a union.",
@@ -521,6 +533,7 @@ const CRISES = [
       ? `<p>The first executive died in the spring, in office, at seventy-four. He had governed for thirty years and named no successor, because no one ever asked him to.</p><p>Three men now claim the office: his son, who has his name; the general who commanded the capital garrison, who has the soldiers; and the chief of the advisory council, who has the constitution, insofar as it says anything.</p><p>{F} has the newspaper spread across the table and is reading it for the third time. {S} says it doesn't matter who wins. {M} says it always matters who wins.</p>`
       : `<p>The last of the founding councillors died in the spring. His son has announced he will take the seat, as the sons of the other founders already have.</p><p>No one elected the son. No one elected the father either — but the father had earned it, and everyone knew how. The son has earned a very good education.</p><p>{F} reads the announcement twice. {S} says the council is a family business now. {M} says it was always going to be.</p>`,
     insp:"Inspired by the deaths of founding strongmen and the crises of succession that followed, from Cromwell to post-colonial presidencies.",
+    voice:()=>({r:"M",q:"It always matters who wins. Most of all when nobody wrote down how they're supposed to."}),
     choices:[
       {l:"Hold an open election for the seat", c:"The constitution is honoured. The losers must accept it.", e:{leg:10,inst:10,coh:-10}, f:["peacefulTransfer"],
        after:"An election is held. It is bitter, close, and peaceful. The loser concedes in a letter printed on the front page.",
@@ -537,6 +550,7 @@ const CRISES = [
     cause:h=>h.has("landedCitizens")?"Arrived because the founding made land the price of citizenship.":"Arrived because the vote stops at the property line.",
     story:h=>`<p>Three thousand people who cannot vote are walking to the capital. Tenant farmers, dock workers, seamstresses, widows whose land was in a husband's name. It is a nine-day walk. They sleep in fields and church halls along the way, and every town adds a few hundred more.</p><p>Their banner has a line from the founding document on it, with one word underlined.</p><p>${h.fam.landed?"{M} has never voted; the deed is in {F}'s name. She has packed a bag.":"No one in the {fam} family has ever voted. {M} has packed a bag; {S} is carrying the banner."} {F} has not said whether he is coming. He is standing by the door.</p>`,
     insp:"Inspired by the Chartists, the Selma to Montgomery marches, and the women's suffrage processions.",
+    voice:()=>({r:"M",q:"Nine days' walk. My feet will manage. It's the forty years of never being asked that hurt."}),
     choices:[
       {l:"Extend the vote to every adult citizen", c:"The nation's electorate triples overnight. So do its demands.", e:{inc:20,leg:10,coh:-5}, f:["universalVote"],
        after:"The vote passes after an all-night session. The marchers hear the news on the capitol steps. Some of them sit down on the stone and cry.",
@@ -553,6 +567,7 @@ const CRISES = [
     cause:h=>h.has("suppressed")?"Arrived because the petition was burned.":h.has("deferred")?"Arrived because the committee is still studying the question.":"Arrived because the contradiction was never addressed.",
     story:h=>`<p>Cassius has been dead for years. His son Marcus does not write petitions.</p><p>On a night in late summer, workers on eleven estates put down their tools at once and walked off together. By morning there were four thousand of them on the hill road, some armed. Their single demand is printed on a sheet nailed to every church door in the district: <em>The document says all persons. Prove it.</em></p><p>{S} is ${h.has("S_radical")?"already with them":"in town when the news arrives"}. {F} says the government must restore order. {D} asks what order means, exactly, and nobody at the table answers her.</p>`,
     insp:"Inspired by the Haitian Revolution, Nat Turner's rebellion, the Morant Bay rebellion, and the American Civil War.",
+    voice:()=>({r:"D",q:"The document says all persons. I'd like someone to tell me which word they don't understand."}),
     choices:[
       {l:"Abolish coerced and bonded labour, now", c:"The founding promise is kept, late and under fire. The estates will not accept it quietly.", e:{inc:20,coh:-10,leg:5,pros:-10}, f:["abolished"],
        after:"Abolition passes in eleven days. Three estate owners take up arms and are defeated within the year. The rest sue, and lose, and live.",
@@ -569,6 +584,7 @@ const CRISES = [
     cause:h=>h.has("minimalRights")?"Arrived because the founding document promises no protection for speech.":(h.has("civilRights")&&!h.has("courts"))?"Arrived because speech is promised and nothing enforces the promise.":"Arrived because power is always tempted to silence its critics.",
     story:h=>`<p>A printer named Osric published a pamphlet accusing a senior official of selling offices. The accusation is detailed, specific, and — most people suspect — true. Osric was arrested at his press the next morning and his type was confiscated.</p><p>${h.has("minimalRights")?"Nothing in the founding document says he can't be.":h.has("civilRights")?"The founding document promises freedom of speech. Whether anything enforces that promise is about to be tested.":"The founding document says nothing about speech either way."}</p><p>{D} has a copy of the pamphlet. She read it aloud to {M}, who listened with her eyes closed and said, "Well, now we'll find out what kind of country this is."</p>`,
     insp:"Inspired by the Zenger trial, the Sedition Act of 1798, and the Peterloo-era prosecutions of radical printers.",
+    voice:()=>({r:"D",q:"Osric printed what everyone already knew. Now we find out whether knowing it is a crime."}),
     choices:[
       {l:"Let the courts hear it — truth is a defence", c:"A precedent for a free press. The official will be exposed.", e:{inst:15,leg:10}, f:["pressFree"],
        after:"A jury acquits Osric in forty minutes. The official resigns. Every printer in the nation reads the verdict and orders more paper.",

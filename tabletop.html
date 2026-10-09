@@ -382,27 +382,6 @@ $('snd').onclick=e=>{ setSfx(!SFX.on); e.currentTarget.blur(); };
 setSfx(SFX.on);
 
 // ═══════════════════════════════════════════════════════════
-// CRISIS VOICES — a family member reacts as each crisis is drawn
-// ═══════════════════════════════════════════════════════════
-const VOICES={
-  plague:()=>({r:"M",q:"I've delivered three babies in the harbour this month. Close it. Close it today, whatever the merchants say."}),
-  road:()=>({r:"F",q:"A barn full of grain and no road to sell it on. They can wait us out. Can we wait them out?"}),
-  landgrab:()=>({r:"S",q:"Grandfather's musket still fires. I'm only saying it still fires."}),
-  school:()=>({r:"D",q:"Delia taught me to read. Who teaches the ones after me?"}),
-  badyear:()=>({r:"M",q:"The clerk wrote our name in a book. I'd like to know what the book is for."}),
-  nativism:()=>({r:"D",q:"Amara asked me if her family will have to leave. I said no. Was I lying?"}),
-  petition:()=>({r:"S",q:"Forty-seven of them signed it. They used the founding document's own words. I watched them do it."}),
-  tariff:()=>({r:"F",q:"Two customs houses in thirty miles. When I was young we called that a foreign country."}),
-  flood:()=>({r:"F",q:"[[I helped one of those families rebuild after the last flood. This time there's nothing left to rebuild.||Forty houses. Ours was one of them.]]"}),
-  veterans:h=>(h.has("S_soldier")||h.fam.sonSoldier)?{r:"S",q:"I have the papers. I have the medal. I don't have the land."}:{r:"F",q:"Tomas sleeps in our barn. He fought so we could have a country. The country owes him forty acres."},
-  strike:()=>({r:"S",q:"Six hundred of us walked out. If we go back now, we go back for less. For good."}),
-  succession:()=>({r:"M",q:"It always matters who wins. Most of all when nobody wrote down how they're supposed to."}),
-  march:()=>({r:"M",q:"Nine days' walk. My feet will manage. It's the forty years of never being asked that hurt."}),
-  rising:()=>({r:"D",q:"The document says all persons. I'd like someone to tell me which word they don't understand."}),
-  printer:()=>({r:"D",q:"Osric printed what everyone already knew. Now we find out whether knowing it is a crime."})
-};
-
-// ═══════════════════════════════════════════════════════════
 // CARDS
 // ═══════════════════════════════════════════════════════════
 const NAMES=Object.fromEntries(METERS.map(m=>[m.k,m.n]));
@@ -495,7 +474,7 @@ function nextCrisis(){
   center(`<div class="card draw" style="transform:rotate(-1.2deg)"><div class="frame"><div class="band" style="background:var(--red)"><span>Crisis · ${cr.type}</span><span>Year ${cr.year}</span></div><div class="art">${CRISIS_ART[cr.id]()}</div></div>
     <h1>${cr.title}</h1><div class="story">${paras(T(cr.story(h)))}</div>
     <div class="note"><b>Why this card was drawn</b>${T(cr.cause(h))}<br><span style="opacity:.75">${cr.insp}</span></div></div>${hand(cr.choices,'var(--red)',.6)}`);
-  const v=VOICES[cr.id]&&VOICES[cr.id](h); if(v) setTimeout(()=>say(v.r,`“${T(v.q)}”`,'say'),900);
+  const v=cr.voice&&cr.voice(h); if(v) setTimeout(()=>say(v.r,`“${T(v.q)}”`,'say'),900);
   wireHand(cr.choices,{
     onSelect:()=>{ $('played-x').innerHTML=`<b>${state.nation.name} must choose</b>Click again or press Enter to play this card.`; },
     onPlay:i=>{

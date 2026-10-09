@@ -1,0 +1,4 @@
+# Same site as GitHub Pages: the tabletop version served as index.html, plus engine.js.
+[build]
+  command = "rm -rf _site && mkdir _site && cp tabletop.html _site/index.html && cp engine.js _site/engine.js"
+  publish = "_site"

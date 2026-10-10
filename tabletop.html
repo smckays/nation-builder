@@ -277,7 +277,22 @@ const CRISIS_ART={
   succession:()=>art(K.wall,M.interior(),M.chair(),M.people(60,150,2,{color:K.ink}),M.people(330,150,2,{color:'#4f6a3e',rifle:true})),
   march:()=>art(K.sky,M.sun(70,36),field(),M.road(),M.banner(),M.people(110,166,12,{gap:20})),
   rising:()=>art(K.night,M.stars(),M.moon(80,40),M.hills('#1f2a40','#141b2b'),M.people(40,160,18,{gap:21,color:'#141b2b',torch:true})),
-  printer:()=>art('#5f574f',M.press(),M.people(330,132,1,{color:K.stone}))
+  printer:()=>art('#5f574f',M.press(),M.people(330,132,1,{color:K.stone})),
+  titlesuits:()=>art(K.wall,`<rect y="140" width="440" height="30" fill="${K.brown}"/>`,M.desk(),M.stakes()),
+  compensation:()=>art(K.wall,M.interior(),M.table(),M.scroll(),M.people(110,104,6,{gap:22,color:K.ink}),M.people(250,150,5,{gap:22})),
+  feversummer:()=>art('#3d5a4a',M.square(),`<rect y="140" width="440" height="30" fill="${K.stone}"/>`,`<rect width="440" height="170" fill="#7fae6a" opacity=".25"/>`,M.people(40,166,3,{color:K.plum})),
+  seconddry:()=>art(K.sand,M.sun(),M.hills(K.orange,K.brown),M.cracks(),M.house(300,124,K.red),M.people(90,150,5,{gap:22,sign:true})),
+  readingtest:()=>art(K.sky,field(),M.school(false),M.people(30,166,5,{gap:18}),M.people(300,166,5,{gap:18})),
+  workshops:()=>art(K.dusk,`<rect y="140" width="440" height="30" fill="${K.stone}"/>`,M.shop()),
+  patron:()=>art(K.sky,M.sun(70,38),field(),M.road(),M.gate(false),M.people(150,104,5,{gap:34,color:K.plum,rifle:true})),
+  inspector:()=>art(K.wall,`<rect y="140" width="440" height="30" fill="${K.brown}"/>`,M.desk(),M.people(250,140,2,{gap:26,color:K.ink})),
+  secession:()=>art(K.sky,M.sun(70,38),field(),M.road(),M.gate(true),M.people(120,104,3,{gap:30}),M.people(300,104,3,{gap:30,color:K.night})),
+  occupation:()=>art(K.wall,`<rect y="140" width="440" height="30" fill="${K.brown}"/>`,M.desk(),M.people(230,140,7,{gap:22,color:'#4f6a3e'}),M.bonfire(380,150)),
+  compensation2:()=>art(K.wall,M.interior(),M.table(),M.scroll(),M.people(110,104,6,{gap:22,color:K.ink}),M.people(250,150,5,{gap:22})),
+  generalstrike:()=>art(K.night,M.stars(),`<rect y="140" width="440" height="30" fill="#5f574f"/>`,M.factory(),M.people(10,166,21,{gap:20,sign:true})),
+  railway:()=>art(K.sky,M.sun(380,38),field(),M.rows(),M.stakes(),`<path d="M0 156 L440 146 M0 164 L440 154" stroke="${K.ink}" stroke-width="3"/>`+Array.from({length:14},(_,i)=>`<path d="M${i*32+8} 166 L${i*32+12} 144" stroke="${K.dbrown}" stroke-width="4"/>`).join('')),
+  secondwalk:()=>art(K.sky,M.sun(70,36),field(),M.road(),M.banner(),M.people(100,166,14,{gap:18,color:K.plum})),
+  heirsheir:()=>art(K.wall,M.interior(),M.chair(),M.people(150,150,1,{color:K.gold}),M.people(330,150,2,{color:K.ink}))
 };
 const ERA_ART={
   title:()=>art(K.dusk,M.sun(220,96),M.hills('#b0603e','#7a3d22'),M.house(70,136,K.red,1),M.house(300,140,K.blue,1),`<path d="M220 112 L220 56" ${O}/><path d="M222 58 L262 66 L222 76 Z" fill="${K.red}" ${O}/>`),
@@ -470,13 +485,13 @@ function ratify(){
 
 function startEra(era){ state.era=era; state.queue=pickCrises(era); state.ci=0; setYear(state.year); nextCrisis(); }
 function nextCrisis(){
-  if(state.ci>=state.queue.length) return state.era===2?midpoint():epilogue();
+  if(state.ci>=state.queue.length) return state.era===2?midpoint():state.era===3?startEra(4):epilogue();
   const cr=state.queue[state.ci], h=H(); state.used.add(cr.id); state.year=cr.year;
   setYear(cr.year); updateAges(); updateBoard(); hush();
   sfx.draw();
-  center(`<div class="card draw" style="transform:rotate(-1.2deg)"><div class="frame"><div class="band" style="background:var(--red)"><span>Crisis · ${cr.type}</span><span>Year ${cr.year}</span></div><div class="art">${CRISIS_ART[cr.id]()}</div></div>
+  center(`<div class="card draw" style="transform:rotate(-1.2deg)"><div class="frame"><div class="band" style="background:${cr.payoff?'var(--gold);color:var(--ink)':'var(--red)'}"><span>${cr.payoff?'Consequence':'Crisis'} · ${cr.type}</span><span>Year ${cr.year}</span></div><div class="art">${(CRISIS_ART[cr.id]||ERA_ART.mid)()}</div></div>
     <h1>${cr.title}</h1><div class="story">${paras(T(cr.story(h)))}</div>
-    <div class="note"><b>Why this card was drawn</b>${T(cr.cause(h))}<br><span style="opacity:.75">${cr.insp}</span></div></div>${hand(cr.choices,'var(--red)',.6)}`);
+    <div class="note"${cr.payoff?' style="box-shadow:inset 4px 0 0 var(--gold)"':''}><b>${cr.payoff?'Set in motion':'Why this card was drawn'}</b>${T(cr.cause(h))}<br><span style="opacity:.75">${cr.insp}</span></div></div>${hand(cr.choices,cr.payoff?'var(--gold)':'var(--red)',.6)}`);
   const v=cr.voice&&cr.voice(h); if(v) setTimeout(()=>say(v.r,`“${T(v.q)}”`,'say'),900);
   wireHand(cr.choices,{
     onSelect:()=>{ $('played-x').innerHTML=`<b>${state.nation.name} must choose</b>Click again or press Enter to play this card.`; },
@@ -486,7 +501,7 @@ function nextCrisis(){
       center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--ink)"><span>${cr.title} · what happened</span><span>Year ${cr.year}</span></div></div>
         <h1 class="q">${T(c.l)}</h1><div class="story"><p>${T(c.after)}</p></div>
         ${sp?'':`<div class="note"><b>The ${state.family.surname} family</b>${T(c.fam)}</div>`}
-        <div class="actions"><button class="primary" onclick="state.ci++;nextCrisis()">${state.ci===state.queue.length-1?(state.era===2?'Twenty-five years on →':'Fifty years on →'):'Draw the next crisis →'}</button></div></div>`);
+        <div class="actions"><button class="primary" onclick="state.ci++;nextCrisis()">${state.ci===state.queue.length-1?(state.era===2?'Twenty-five years on →':'Toward Year 50 →'):'Draw the next card →'}</button></div></div>`);
       primaryKeys();
     }
   });

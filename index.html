@@ -424,12 +424,12 @@ function showMidpoint(){
 // ═══════════════════════════════════════════════════════════
 function startEra(era){ state.era=era; state.queue=pickCrises(era); state.ci=0; nextCrisis(); }
 function nextCrisis(){
-  if(state.ci>=state.queue.length){ return state.era===2 ? showMidpoint() : showEpilogue(); }
+  if(state.ci>=state.queue.length){ return state.era===2 ? showMidpoint() : state.era===3 ? startEra(4) : showEpilogue(); }
   const cr=state.queue[state.ci], h=H();
   state.used.add(cr.id); state.year=cr.year; state.pending=null; state.phase="crisis";
   $('crisis-type').textContent=cr.type;
   $('crisis-title').textContent=cr.title;
-  $('crisis-year').textContent=`Year ${cr.year} of ${state.nation.name} · ${state.era===2?'The first years':'The second generation'} · ${state.ci+1} of ${state.queue.length}`;
+  $('crisis-year').textContent=`Year ${cr.year} of ${state.nation.name} · ${cr.payoff?'A consequence':state.era===2?'The first years':state.era===3?'The second generation':'The third generation'} · ${state.ci+1} of ${state.queue.length}`;
   $('crisis-story').innerHTML=T(cr.story(h));
   $('crisis-cause').textContent=T(cr.cause(h));
   $('crisis-insp').textContent=cr.insp;
@@ -458,7 +458,7 @@ function commitCrisis(){
   $('crisis-commit').classList.remove('show');
   const last = state.ci===state.queue.length-1;
   $('crisis-after').innerHTML=`<div class="label-sm">What happened</div><div class="story"><p>${T(c.after)}</p></div><div class="fam">${T(c.fam)}</div>
-    <button class="btn-primary" onclick="state.ci++;nextCrisis()">${last?(state.era===2?'Twenty-five years on →':'Fifty years on →'):'Continue →'}</button>`;
+    <button class="btn-primary" onclick="state.ci++;nextCrisis()">${last?(state.era===2?'Twenty-five years on →':'Toward Year 50 →'):'Continue →'}</button>`;
   $('crisis-after').classList.add('show');
   $('crisis-after').scrollIntoView({behavior:'smooth',block:'nearest'});
 }

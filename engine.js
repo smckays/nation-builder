@@ -600,6 +600,263 @@ const CRISES = [
 
 
 // ═══════════════════════════════════════════════════════════
+// CONSEQUENCE CARDS — payoffs for promises the crisis text made.
+// Each is forced (w = 100) once its seed flag is set; `payoff:true`
+// lets a front end mark it, and its cause names the year of the seed.
+// Era III holds payoffs seeded in Era II; Era IV (Years 39–48) holds
+// payoffs seeded in Era III and appears only when one is set.
+// Era IV text never relies on the parents being alive (they die from Year 40).
+// ═══════════════════════════════════════════════════════════
+const since = f => state.flagYear[f];
+const seeded = f => h => h.has(f) ? 100 : 0;
+const compensation = (id, era, year, when) => ({ id, era, year, payoff:true, type:"Reckoning", icon:"corruption", title:"The compensation bill",
+  w:h=>h.has("abolished")&&when(since("abolished"))?100:0,
+  cause:h=>`Set in motion in Year ${since("abolished")}, when ${state.nation.name} ended bonded labour. Its owners did not go quietly.`,
+  story:h=>`<p>The estate owners have drafted a bill. They lost property when the bonds ended, they say, and the founding document protects property. They want compensation from the treasury: a fixed sum for every worker freed.</p><p>Nobody has drafted a bill for the freed. They left the estates with the clothes they wore and the skills nobody would pay them for. Some are still living in the same quarters, working the same fields, for wages the owners set.</p><p>{S} read the bill twice. "They want paying for what they lost," he said. "Who pays for what was taken from the others?"</p>`,
+  insp:"Inspired by the British compensation of slave owners in 1833, the promise of forty acres that was withdrawn in 1865, and Haiti's indemnity to France.",
+  voice:()=>({r:"S",q:"They want paying for what they lost. The freed lost whole lives. Who pays them?"}),
+  choices:[
+    {l:"Pay the owners from the treasury", c:"The owners are satisfied. The freed get nothing.", e:{pros:-8,inc:-5,coh:5}, f:["ownersPaid"],
+     after:"The bill passes. The treasury pays the former owners for decades; the freed are paid nothing, and the debt is still on the books at Year 50.",
+     fam:"{S} works out what the payments would have bought if they had gone to the freed instead. He keeps the figure in his wallet."},
+    {l:"Grant land and tools to the freed families instead", c:"The freed get a start. The owners call it a second robbery.", e:{eq:10,pros:-8,coh:-10,leg:5}, f:["freedLand"],
+     after:"Every freed family receives a small grant of land and a set of tools, taken from the estates' unused acres. The owners sue, lose, and never forgive the government.",
+     fam:"{S} helps a freed family raise a fence on their new land. They do not ask him to, and they do not thank him, and that is how he knows it is right."},
+    {l:"Pay no one — the matter is closed", c:"No new debts. No new justice.", e:{leg:-5,coh:-3},
+     after:"The bill dies in committee. The owners grumble; the freed stay where they are, working for whoever will pay.",
+     fam:"{S} says closing a matter is not the same as settling it. Nobody in the assembly appears to have heard of the difference."}
+  ]});
+
+const PAYOFFS = [
+  { id:"titlesuits", era:3, year:26, payoff:true, type:"Land", icon:"stakes", title:"The title suits",
+    w:seeded("landRegistry"),
+    cause:h=>`Set in motion in Year ${since("landRegistry")}, when ${state.nation.name} created a land registry where the first recorded claim wins.`,
+    story:h=>`<p>The Northern Land Company has filed suits against a hundred and forty smallholders. Its lawyers have found Crown Grant Books older than the registry, and the registry, as written, honours the oldest paper.</p><p>Most families in the valley hold nothing older than a tax receipt from before the war. The company holds the Crown's own seal.</p><p>[[{F} has a summons on the kitchen table, weighted down with the tax receipt that saved his land the first time.||{F}'s landlord has already sold the lease to the company. The new rent arrives with the summons.]]</p>`,
+    insp:"Inspired by the Mexican land-grant disputes after 1848, the Irish Encumbered Estates court, and disputed colonial titles everywhere.",
+    voice:()=>({r:"F",q:"My father's receipt says the land is ours. Their paper is older. Which paper is the country?"}),
+    choices:[
+      {l:"Uphold the Grant Books — old title is title", c:"The law is consistent. The Crown's grants outlive the Crown.", e:{inst:5,eq:-12,leg:-8}, f:["grantBooksUpheld"],
+       after:"The courts find for the company in a hundred and twelve cases. The Crown that the nation fought to remove still decides who owns its fields.",
+       fam:"[[{F} loses the east field and keeps the house. He stops saying the word \"independence\" at supper.||The {fam} family's rent rises by a third. {F} pays it.]]"},
+      {l:"Void every Crown grant — title begins at Year One", c:"The revolution reaches the land registry. Every old estate is now in doubt.", e:{eq:10,inst:-6,leg:6,pros:-5}, f:["crownTitlesVoided"],
+       after:"An act voids all titles that rest only on a Crown grant. The company's suits collapse, and so does the value of half the great estates.",
+       fam:"[[{F} burns the summons in the stove and the tax receipt goes back in its tin.||{F} hears that the landlord's title is void. Nobody yet knows whose the field is now.]]"},
+      {l:"Twenty years' use makes a title", c:"Whoever has worked the land long enough keeps it. Lawyers become less useful.", e:{inst:8,eq:5,pros:-3}, f:["usageTitle"],
+       after:"A new rule gives title to anyone who has farmed land openly for twenty years. Most suits are dropped; a few drag on for a decade.",
+       fam:"[[{F} counts his years on the land on his fingers and laughs.||{F} has worked his field for twenty-five years. For the first time, a law has been written with him in mind.]]", ff:{landless:["F_ownsLand"]}}
+    ]},
+  compensation("compensation", 3, 27, y=>y<=24),
+  { id:"feversummer", era:3, year:29, payoff:true, type:"Plague", icon:"plague", title:"The fever summer",
+    w:seeded("endemicFever"),
+    cause:h=>`Set in motion in Year ${since("endemicFever")}, when ${state.nation.name} answered the fever ships with guidance instead of a quarantine.`,
+    story:h=>`<p>The fever that settled into the harbour has come back every few summers since. This summer it reached the capital.</p><p>Half the assembly left for their country houses in the first week. The ones who stayed meet in a hall that smells of vinegar. The wells in the poor districts sit downhill from the cemeteries, and everyone has known it for years.</p><p>{M} has caught it every winter since the harbour summer. "Now the capital gets its turn," she says, and is ashamed of how good it feels to say it.</p>`,
+    insp:"Inspired by London's Great Stink of 1858, John Snow's cholera map, and the yellow fever summers of American port cities.",
+    voice:()=>({r:"M",q:"I've had it every winter for twenty years. Now the capital gets a turn."}),
+    choices:[
+      {l:"Build water and sewers for the whole capital", c:"The most expensive thing the nation has ever built. It works.", e:{pros:-10,inst:10,eq:5,leg:5}, f:["sanitation"],
+       after:"It takes nine years and a loan from abroad. The fever never comes back to the capital, and slowly stops coming to the harbour too.",
+       fam:"{D} reads that the sewers will reach the valley towns last. She writes to her representative about it every month until they do."},
+      {l:"Quarantine the poor districts", c:"The fever is fenced in with the people who catch it.", e:{eq:-10,coh:-6,leg:-5},
+       after:"Soldiers cordon the low districts. The fever burns out inside the cordon by autumn, along with nine hundred people who could not leave.",
+       fam:"{S} has a friend inside the cordon. He passes bread over the fence at night until a soldier tells him to stop."},
+      {l:"Leave it to the parishes and the physicians", c:"Charity and medicine do what they can.", e:{inst:-5,coh:3},
+       after:"The church opens fever wards and the physicians do heroic, useless work. The fever stays, part of the city's calendar.",
+       fam:"{D} volunteers at a fever ward for six weeks. She comes home knowing exactly which streets will flood next spring."}
+    ]},
+  { id:"seconddry", era:3, year:30, payoff:true, type:"Hardship", icon:"drought", title:"The second dry year",
+    w:seeded("reliefPrecedent"),
+    cause:h=>`Set in motion in Year ${since("reliefPrecedent")}, when ${state.nation.name} opened the treasury in the bad year. Every hard year since has arrived as a demand.`,
+    story:h=>`<p>The rains came late this year, and light. It is not the bad year; most wells still run. But the northern districts have sent a petition citing Year ${since("reliefPrecedent")} by date, and asking for the same relief.</p><p>The treasury is thinner than it was. Three other districts have petitions drafted and waiting to see what happens to this one.</p><p>{F} remembers the October the relief came. He also remembers that it came because the year was terrible, and this one is merely bad.</p>`,
+    insp:"Inspired by the growth of famine relief codes in British India, U.S. farm relief after 1933, and the politics of disaster declarations.",
+    voice:()=>({r:"F",q:"In Year 14 the treasury saved us. Now every bad month is a drought. I can't tell if I'm proud or ashamed."}),
+    choices:[
+      {l:"Pay the relief again", c:"The precedent becomes a right. The bill grows every year.", e:{leg:5,pros:-10,eq:3}, f:["reliefEntitlement"],
+       after:"Relief is paid. Within five years it is paid every year somewhere, and the treasury plans for it like a season.",
+       fam:"{F} signs for the relief and gives half of it to a neighbour whose well really has run dry."},
+      {l:"Write rules — relief only for a measured drought", c:"Fair and predictable. Some real hardship falls just under the line.", e:{inst:10,leg:-2}, f:["reliefRules"],
+       after:"A relief code is written: rainfall measured, thresholds published, relief automatic below them. This year's petition fails by two inches.",
+       fam:"{D} reads the relief code aloud at supper. {F} says it is the first law he has understood on the first reading."},
+      {l:"Refuse — the treasury cannot pay every year", c:"The precedent is broken. So is a promise people believed in.", e:{leg:-12,coh:-8,pros:3},
+       after:"The petition is refused. The northern districts stop paying their taxes on time, and their representatives stop voting with the capital.",
+       fam:"{S} says the government taught people to ask, and is now surprised that they asked."}
+    ]},
+  { id:"readingtest", era:3, year:30, payoff:true, type:"The vote", icon:"corruption", title:"The reading test",
+    w:seeded("schoolsLost"),
+    cause:h=>`Set in motion in Year ${since("schoolsLost")}, when ${state.nation.name} let the valley schools close.`,
+    story:h=>`<p>Twenty years after the valley schools closed, one adult in three in the valley cannot read a ballot. The assembly has noticed.</p><p>A bill proposes that every voter read a passage of the founding document aloud before voting. Its sponsors say an informed vote is the foundation of the republic. Its sponsors also know exactly who closed the schools.</p><p>{D} learned at the kitchen table after her school closed. The boy who sat beside her did not learn at all.</p>`,
+    insp:"Inspired by literacy tests in the post-Reconstruction American South and property-and-education franchise rules across 19th-century Europe.",
+    voice:()=>({r:"D",q:"They closed my school, and now they want to test whether I can read."}),
+    choices:[
+      {l:"Pass the reading test", c:"An informed electorate, and a smaller one.", e:{inc:-15,leg:-10}, f:["literacyTest"],
+       after:"The test passes. The valley's electorate falls by a third, and the third that remains votes for the men who wrote the test.",
+       fam:"{D} passes the test easily. The man in front of her in the queue does not, and walks home without looking at anyone."},
+      {l:"Reopen the schools instead", c:"Twenty years late, the classrooms return.", e:{eq:8,pros:-5,inc:5}, f:["schoolsReopened"],
+       after:"The schools reopen, with evening classes for adults. The first evening class in the valley has forty pupils and one book.",
+       fam:"{D} teaches the first evening class herself. The boy who sat beside her, now a grown man, is in the second row."},
+      {l:"Do neither", c:"The test fails. So does the valley.", e:{leg:-3},
+       after:"The bill fails and nothing replaces it. The schools stay closed; the valley votes, and reads, as it did.",
+       fam:"{D} starts lending her books on Sundays. The waiting list is longer than the shelf."}
+    ]},
+  { id:"workshops", era:3, year:31, payoff:true, type:"Labour", icon:"nativism", title:"The empty workshops",
+    w:seeded("yusufLeft"),
+    cause:h=>`Set in motion in Year ${since("yusufLeft")}, when ${state.nation.name} restricted immigration and Yusuf left.`,
+    story:h=>`<p>The foundries need metalworkers, the shipwrights need joiners, and there are not enough of either. The assembly that restricted immigration fourteen years ago has sent recruiters abroad.</p><p>Yusuf's old shop has been empty all that time. The sign is still faintly readable under the paint.</p><p>{D} had a letter from Amara last year. Her father opened a new shop by a harbour in another country. It is doing well. It sells tools, some of them to {nation}.</p>`,
+    insp:"Inspired by postwar guest-worker programs, the reversal of 19th-century exclusion laws, and skills shortages after expulsions.",
+    voice:()=>({r:"D",q:"Amara's father opened a shop by a harbour in another country. We buy his tools now."}),
+    choices:[
+      {l:"Recruit abroad, with a real path to citizenship", c:"The workshops fill. The argument about belonging starts again.", e:{inc:8,pros:8,coh:-5}, f:["openRecruitment"],
+       after:"Recruits arrive with contracts that end in citizenship. The workshops fill within two years, and the market talk starts again within one.",
+       fam:"{S} works beside two of the new recruits. He teaches them the valley's words for tools; they teach him theirs."},
+      {l:"Train our own — an apprenticeship fund", c:"Slower. The skills stay home.", e:{pros:3,eq:5,inst:3},
+       after:"An apprenticeship fund pays masters to train the valley's young. The shortage eases in a decade.",
+       fam:"{D}'s eldest takes an apprenticeship at the foundry. The master is a man Yusuf trained."},
+      {l:"Write to Yusuf and ask him back", c:"An apology, of a kind, addressed to one man.", e:{leg:5,inc:5}, f:["yusufInvited"],
+       after:"The assembly writes to Yusuf by name. His reply comes in spring: he is too old to start again. But Amara will come, and bring her children.",
+       fam:"{D} meets Amara at the coach stop after fourteen years. Neither of them can say anything for a while."}
+    ]},
+  { id:"patron", era:3, year:32, payoff:true, type:"Sovereignty", icon:"road", title:"The patron's price",
+    w:seeded("foreignPatron"),
+    cause:h=>`Set in motion in Year ${since("foreignPatron")}, when ${state.nation.name} traded favours for a distant ally's protection.`,
+    story:h=>`<p>The great power that guaranteed the road has sent a new ambassador. He is polite and specific. His government would like a permanent garrison at the river crossing, and a seat on {nation}'s trade board.</p><p>Its advisers already hold four offices in the capital. Its merchants pay lower duties than {nation}'s own.</p><p>{S} sees their officers at the inn most evenings. They pay well and never ask what anything costs.</p>`,
+    insp:"Inspired by unequal treaties, foreign concessions in 19th-century China and Egypt, and protectorates that began as alliances.",
+    voice:()=>({r:"S",q:"Their officers drink at the inn now. They pay well. They never ask the price."}),
+    choices:[
+      {l:"Grant the garrison and the seat", c:"The protection continues. So does the dependence.", e:{pros:5,leg:-12,inst:-5}, f:["patronBase"],
+       after:"The garrison is built. Within ten years the ambassador's opinion is the first thing every minister asks for.",
+       fam:"{S}'s son takes a job at the garrison. The pay is twice what the docks pay. {S} does not stop him and does not congratulate him."},
+      {l:"Refuse, and pay off the debt with a tax", c:"Independence again, at a price everyone feels.", e:{pros:-10,leg:10,coh:5}, f:["patronRefused"],
+       after:"A special tax repays every favour in six years. The advisers leave the capital; the road stays open, now on {nation}'s own guard.",
+       fam:"{D} pays the patron tax and grumbles about it every quarter. She would not trade it back."},
+      {l:"Negotiate a fixed term", c:"Ten years, then they go. If they go.", e:{leg:-3,inst:3},
+       after:"A ten-year lease is signed for the garrison. When the ten years end, the ambassador asks for ten more.",
+       fam:"{S} marks the lease's end date on the calendar in the kitchen. It is still marked there years after it passes."}
+    ]},
+  { id:"inspector", era:3, year:33, payoff:true, type:"Accountability", icon:"corruption", title:"The inspector's reach",
+    w:seeded("oversight"),
+    cause:h=>`Set in motion in Year ${since("oversight")}, when ${state.nation.name} created an inspectorate after the valley school closed.`,
+    story:h=>`<p>The inspectorate created after Delia's school closed has finished its largest audit. The most popular minister in the government, a hero of the war, has been selling road contracts to his relatives for eleven years.</p><p>The election is in three months. The minister's party controls the inspectorate's budget.</p><p>{D} remembers the inspectorate's name from the kitchen table, the year her schooling went on there. She has been waiting to see whether it would ever be allowed to find someone important.</p>`,
+    insp:"Inspired by the Teapot Dome scandal, Britain's Marconi affair, and the fate of anti-corruption agencies when they reach the top.",
+    voice:()=>({r:"D",q:"The inspectorate was made for Delia's school. Now it has found someone big. Will it be allowed to finish?"}),
+    choices:[
+      {l:"Publish the report now", c:"The truth before the election. The hero falls.", e:{inst:12,leg:5,coh:-8}, f:["inspectorateStrong"],
+       after:"The report is published in full. The minister resigns, his party loses the election, and every office in the capital starts keeping better records.",
+       fam:"{D} buys three copies of the report. She gives one to Delia, who is old now, and who reads it twice."},
+      {l:"Delay it until after the election", c:"Stability now. The report will still be true later.", e:{inst:-10,leg:-5},
+       after:"The report waits. The minister wins re-election and the inspectorate's budget is cut the following spring.",
+       fam:"{D} writes to the inspectorate asking when the report will be published. The reply thanks her for her interest."},
+      {l:"Fold the inspectorate into the ministry", c:"Oversight, overseen by the people it was overseeing.", e:{inst:-15,leg:-5}, f:["inspectorateFolded"],
+       after:"The inspectorate becomes a department of the ministry it was auditing. Its next report finds nothing to report.",
+       fam:"{D} says it was a good idea while it lasted. She says it the way her mother used to talk about the valley school."}
+    ]},
+  { id:"secession", era:3, year:36, payoff:true, type:"Regions", icon:"tariff", title:"The secession vote",
+    w:seeded("regionalSplit"),
+    cause:h=>`Set in motion in Year ${since("regionalSplit")}, when ${state.nation.name} let each region set its own terms in the tariff war.`,
+    story:h=>`<p>The provinces drifted apart after the tariff war. They print their own notes, teach their own histories and, for twelve years, have elected their own governors who call each other \"our neighbours\".</p><p>Now the largest province has called a vote on leaving the federation altogether. The polls say it will pass.</p><p>{F} has cousins on the other side of the provincial line. If the vote passes, he will need papers to visit them.</p>`,
+    insp:"Inspired by the Nullification Crisis and secession of 1860–61, the breakup of Gran Colombia, and later independence referendums.",
+    voice:()=>({r:"F",q:"My cousins live forty miles away. After the vote I may need papers to visit them."}),
+    choices:[
+      {l:"Let them vote, and honour the result", c:"A peaceful parting. A smaller nation.", e:{coh:-15,leg:10,pros:-5}, f:["provinceLeft"],
+       after:"The vote passes by eleven points. The province leaves the next spring, with a treaty on the river and the roads. Both sides keep the founding document; neither keeps all of it.",
+       fam:"{F} gets his papers. The guard at the new border is his cousin's son, who waves him through and is reprimanded for it."},
+      {l:"Offer wider autonomy to stay", c:"Federation in name, almost separation in fact.", e:{coh:5,inst:-5},
+       after:"The province is offered its own courts, taxes and militia. The vote fails narrowly. Everyone agrees to call it a victory.",
+       fam:"{S} says the country is now a marriage where both people sleep in different houses. {D} says plenty of marriages last that way."},
+      {l:"Declare the vote illegal and send the army", c:"The union holds by force.", e:{leg:-15,coh:-10,inst:-10}, f:["secessionCrushed"],
+       after:"Troops close the polling stations. There is fighting in two towns and a long, bitter quiet afterwards.",
+       fam:"{S}'s son is called up. He serves in a town where his grandmother was born, and writes home very little."}
+    ]},
+  // ── ERA IV: consequences of the second generation ──
+  { id:"occupation", era:4, year:39, payoff:true, type:"Broken promise", icon:"wardebt", title:"The occupation",
+    w:seeded("veteransBetrayed"),
+    cause:h=>`Set in motion in Year ${since("veteransBetrayed")}, when ${state.nation.name} answered the veterans' land claims with an appeals process.`,
+    story:h=>{ const vet=h.has("S_soldier")||h.fam.sonSoldier;
+      return `<p>Eleven years into the appeals process, seventeen veterans and three hundred of their sons walked into the land office at dawn and did not walk out. They have not harmed anyone. They have burned the files marked \"clerical error\".</p><p>Their demand is the one written on their discharge papers: forty acres each, as promised.</p><p>${vet?"{S} is not inside, but he knows every name on their list, and his own is on it.":"Tomas is one of the seventeen. {S} took him bread on the first night and stayed until morning."}</p>`; },
+    insp:"Inspired by the Bonus Army's camp of 1932, the occupations of land offices in Latin America, and veterans' movements after every war.",
+    voice:h=>(h.has("S_soldier")||h.fam.sonSoldier)?{r:"S",q:"Twenty years of appeals. They didn't burn the office. They burned the files that lied."}:{r:"S",q:"Tomas fought so we could have a country. Now he's sitting in its land office, waiting for it to keep its word."},
+    choices:[
+      {l:"Grant the land now", c:"The promise is kept, under pressure. Others will learn how it was done.", e:{pros:-8,leg:5,inst:-5}, f:["veteransHonored"],
+       after:"The land is granted within a month. The veterans walk out to applause. Every unpaid promise in the nation takes note of the method.",
+       fam:"{S} helps an old soldier pace out his forty acres. The man is seventy-one and has never owned anything."},
+      {l:"Clear the office and arrest them", c:"The law is upheld. The veterans are not.", e:{leg:-10,coh:-8},
+       after:"Soldiers clear the office. The veterans go quietly, which is worse; photographs of old men led out in handcuffs are in every paper.",
+       fam:"{S} stands outside the court every day of the trial. He is not a defendant. He goes anyway."},
+      {l:"Amnesty, and a land commission with a deadline", c:"Forgiveness and a date. The files are rebuilt from memory.", e:{inst:8,leg:5,pros:-5},
+       after:"An amnesty is declared and a commission given one year to settle every claim. It takes two, but it settles them.",
+       fam:"{S} testifies to the commission about what he was promised. The clerk writes it down and, this time, it counts."}
+    ]},
+  compensation("compensation2", 4, 40, y=>y>=27),
+  { id:"generalstrike", era:4, year:40, payoff:true, type:"Labour", icon:"strike", title:"The general strike",
+    w:seeded("strikeBroken"),
+    cause:h=>`Set in motion in Year ${since("strikeBroken")}, when ${state.nation.name} broke the strike at ${state.family.Swork} and the committee's names went on a list.`,
+    story:h=>`<p>The list made in Year ${since("strikeBroken")} has grown every year since. This morning every trade in the capital walked out at once: dockers, foundrymen, printers, carters, the women in the laundries. The trams stopped at eight. The newspapers did not come out.</p><p>Their demand is the one the strike committee made eleven years ago, now in every trade at once: the right to organise.</p><p>{S}, blacklisted since the first strike, did not tell his son to walk out. His son walked out anyway.</p>`,
+    insp:"Inspired by the Winnipeg General Strike of 1919, the British General Strike of 1926, and Barcelona's general strikes.",
+    voice:()=>({r:"S",q:"I've been on the blacklist for eleven years. My son walked out this morning. I didn't tell him to."}),
+    choices:[
+      {l:"Legalise unions in every trade", c:"The strike ends with a law. The owners call it surrender.", e:{eq:12,pros:-5,leg:8}, f:["unions"],
+       after:"An act recognises unions in every trade. The capital's lights come back on the fourth evening, and the blacklist is burned in public.",
+       fam:"{S} watches the blacklist burn. His own name is near the top. He does not cheer, but he does not leave until it is ash."},
+      {l:"Declare martial law", c:"Order, at the point of a bayonet.", e:{leg:-20,coh:-15,inst:-10}, f:["martialLaw"],
+       after:"The army runs the capital for nine weeks. The strike breaks; something in the city's trust in its government breaks with it.",
+       fam:"{S}'s son spends six weeks in a detention camp. He comes home thinner and more certain than his father ever was."},
+      {l:"A labour code, negotiated with the owners", c:"Rules for both sides. Nobody gets everything.", e:{eq:6,inst:8,leg:3}, f:["arbitration"],
+       after:"Owners and unions draft a labour code in a month of shouting. It sets hours, a minimum wage and a board to settle disputes.",
+       fam:"{S} reads the labour code at the union hall. Most of it was in the committee's demands eleven years ago."}
+    ]},
+  { id:"railway", era:4, year:41, payoff:true, type:"Property", icon:"stakes", title:"The railway line",
+    w:seeded("eminentDomain"),
+    cause:h=>`Set in motion in Year ${since("eminentDomain")}, when ${state.nation.name} bought the flooded land by compulsion. The precedent was used again.`,
+    story:h=>`<p>The railway is coming up the valley, and the surveyors are back: stakes, chains and little red flags, forty years after the first ones. This time they have the law behind them. The state may take land for the public good. It said so after the flood.</p><p>The line runs straight through [[the {fam} family's fields||the houses built for the flooded tenants, the {fam} family's among them]].</p><p>{D} watched the stakes go in from the kitchen window. They are the same red flags.</p>`,
+    insp:"Inspired by railway land seizures in the 19th century, Kelo v. New London, and eminent domain disputes over every great public work.",
+    voice:()=>({r:"D",q:"That precedent was meant for floods. Now it's for trains. Precedents don't stay where you put them."}),
+    choices:[
+      {l:"Build the line and pay market value", c:"The railway comes. The families are paid what the land is worth today.", e:{pros:10,eq:-5},
+       after:"The line opens in three years. The families are paid fairly by the land's price, which is not the same as what the land was worth to them.",
+       fam:"{D} uses the payment to send her daughter to the college in the capital. The train takes her there in four hours."},
+      {l:"Route around the smallholdings", c:"A longer line, a bigger bill, and the families stay.", e:{pros:3,leg:6,eq:3}, f:["railwayRerouted"],
+       after:"The engineers add eleven miles and two bridges to go around the valley's farms. The line is slower; the valley keeps its fields.",
+       fam:"{D} can hear the trains from the house, far off, across the river. She finds she likes the sound."},
+      {l:"Take it at the assessed value", c:"Cheap for the state. The assessed value was set in the capital.", e:{pros:10,leg:-10,eq:-8}, f:["railwaySeized"],
+       after:"The land is taken at a valuation set years ago. The families take the money because refusing it gets them nothing.",
+       fam:"[[{D} takes down the framed deed and puts it in a drawer. The land it describes now has a timetable.||The {fam} family moves again, for the second time in one lifetime. {D} packs the jar of soil first.]]", ff:{landed:["F_lostLand"]}}
+    ]},
+  { id:"secondwalk", era:4, year:44, payoff:true, type:"The vote", icon:"march", title:"The second walk",
+    w:seeded("partialVote"),
+    cause:h=>`Set in motion in Year ${since("partialVote")}, when ${state.nation.name} gave the vote to men who pay tax and half the marchers kept walking.`,
+    story:h=>`<p>The banner from the long walk has been copied so many times the underlined word is barely legible. It is being carried again: by the women who were left out when the vote went to tax-paying men eleven years ago.</p><p>There are twice as many marchers as last time. Many are the daughters of the first walk. Some are the granddaughters.</p><p>{D} is at the front, carrying one pole of the banner. Her daughter carries the other.</p>`,
+    insp:"Inspired by the women's suffrage marches of 1913, the Representation of the People Acts, and Swiss women's long wait for the vote.",
+    voice:()=>({r:"D",q:"My mother never voted. I'm past fifty and neither have I. My daughter will not wait as long."}),
+    choices:[
+      {l:"The vote for every adult", c:"The founding document's \"we\" finally means everyone of age.", e:{inc:15,leg:8,coh:-3}, f:["universalVote"],
+       after:"The vote is extended to every adult citizen. The marchers are still on the road when they hear; they finish the walk anyway, to say they did.",
+       fam:"{D} votes for the first time at {Dage}. She wears her mother's good dress, taken in at the waist."},
+      {l:"The vote for women who own property", c:"A wider door, still a door.", e:{inc:5,leg:-2},
+       after:"Women with property may vote. The marchers split, as their mothers did, between the satisfied and the still walking.",
+       fam:"[[{D} qualifies. Her daughter does not. They do not discuss it.||Neither {D} nor her daughter qualifies. They go back out on the road in the spring.]]"},
+      {l:"Refuse — the matter was settled", c:"The law stands. The road fills again.", e:{leg:-10,coh:-5},
+       after:"The assembly refuses. The marchers camp outside it for a month and return every spring after.",
+       fam:"{D} gives her daughter the banner pole and says, \"Next year, you carry it.\""}
+    ]},
+  { id:"heirsheir", era:4, year:46, payoff:true, type:"Succession", icon:"seat", title:"The heir's heir",
+    w:seeded("dynasty"),
+    cause:h=>`Set in motion in Year ${since("dynasty")}, when ${state.nation.name} let the founder's heir take the empty chair.`,
+    story:h=>`<p>The heir who took the chair in Year ${since("dynasty")} has died. His son is nineteen, has never held any office, and has announced that he will take his father's place, as his father took his grandfather's.</p><p>Nobody alive in the government remembers the founding. The founding document says nothing about any of this, because the men who wrote it assumed they would always be there.</p><p>{S} was a young man when the founder died. Now he watches the founder's grandson on the newspaper's front page.</p>`,
+    insp:"Inspired by hereditary republics from the Venetian doges to modern family dictatorships, and the third-generation crises of founding dynasties.",
+    voice:()=>({r:"S",q:"I was young when the founder died. Now his grandson wants the chair. Nobody has asked what the chair is for."}),
+    choices:[
+      {l:"Let the assembly choose", c:"The chair becomes an office again.", e:{leg:10,inst:10,coh:-8}, f:["peacefulTransfer"],
+       after:"The assembly chooses a provincial governor nobody had heard of. The founder's grandson goes to university, and later writes a well-reviewed history of his family.",
+       fam:"{S} reads that the grandson is writing a history. He says he hopes it has a chapter on the rest of us."},
+      {l:"Accept the grandson", c:"Continuity. The office is now plainly a crown.", e:{inst:-10,leg:-8,coh:3},
+       after:"The grandson takes the chair. His portrait replaces his father's in every office, beside his grandfather's.",
+       fam:"{D} takes down the portrait in the valley school, as is now required, and puts up the new one, as is now required."},
+      {l:"A regency council until he is thirty", c:"Time for him to grow up, or for the country to grow out of him.", e:{inst:3,leg:2},
+       after:"A council of elders rules in his name. By the time he turns thirty, the council has learned to rule without him.",
+       fam:"{S} says the regency is a way of not deciding. {D} says that, for once, not deciding may be the wise thing."}
+    ]}
+];
+CRISES.push(...PAYOFFS);
+
+// ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
 const rnd = a => a[Math.floor(Math.random()*a.length)];
@@ -668,7 +925,8 @@ function foundingSentence(){
 function pickCrises(era){
   const h=H();
   const pool=CRISES.filter(c=>c.era===era&&!state.used.has(c.id)).map(c=>({c,w:c.w(h)})).filter(x=>x.w>0);
-  const out=pool.filter(x=>x.w>=100).sort((a,b)=>a.c.year-b.c.year).slice(0,2).map(x=>x.c);
+  // Forced cards come first, up to three: crises the founding forces, then consequence payoffs
+  const out=pool.filter(x=>x.w>=100).sort((a,b)=>(!!a.c.payoff-!!b.c.payoff)||(a.c.year-b.c.year)).slice(0,3).map(x=>x.c);
   let rest=pool.filter(x=>x.w<100);
   while(out.length<2&&rest.length){
     let r=Math.random()*rest.reduce((s,x)=>s+x.w,0), i=0;
@@ -688,7 +946,7 @@ function scores(){
     F: m.eq*.5+m.pros*.5+(f.landed?8:-6)+(h.has("F_ownsLand")?12:0)+(h.has("reliefPrecedent")?5:0)-(h.has("consolidation")?8:0),
     M: m.inc*.5+m.inst*.3+m.leg*.2+(h.has("universalVote")?12:0)-((h.has("propertyVote")||h.has("landedCitizens"))&&!h.has("universalVote")?8:0)-(h.has("motherFever")?5:0),
     S: m.eq*.4+m.leg*.4+m.pros*.2+(h.has("unions")?10:0)+(h.has("arbitration")?5:0)-(h.has("strikeBroken")?10:0)+(h.has("veteransHonored")&&h.has("S_soldier")?8:0),
-    D: edu+m.inc*.4+m.eq*.2-(h.has("schoolsLost")?15:0)+(h.has("oversight")?5:0)+(h.has("pressFree")?3:0)+(h.has("universalVote")?4:0)
+    D: edu+m.inc*.4+m.eq*.2-(h.has("schoolsLost")&&!h.has("schoolsReopened")?15:0)+(h.has("oversight")?5:0)+(h.has("pressFree")?3:0)+(h.has("universalVote")?4:0)
   };
 }
 const tier = (v,hi,lo) => v>=hi?2:v>=lo?1:0;
@@ -762,6 +1020,8 @@ function verdict(){
   const h=H(), m=state.m, n=state.nation.name;
   const avg = METERS.reduce((s,x)=>s+m[x.k],0)/METERS.length;
   if(h.has("civilWar")) return {t:`${n}: the war in the founding`, p:`In Year 35, ${n} went to war with itself over the question its founders declined to answer. The war ended; the question did not. Fifty years on, the nation is two peoples who share a flag and very little else.`};
+  if(h.has("provinceLeft")) return {t:`${n}: smaller, by choice`, p:`In Year 36, ${n} let a province vote itself out, and kept its word when the vote passed. The nation that remains is smaller, poorer and calmer, and it argues about whether that was wisdom or surrender. Across the new border, the other half keeps the same founding document.`};
+  if(h.has("martialLaw")) return {t:`${n}: the nine weeks`, p:`Everything before Year 40 is remembered as one history and everything after as another. The army ran the capital for nine weeks, and the nation that came back out was quieter and less trusting. The founding document still hangs in the assembly. People walk past it faster.`};
   if(h.has("junta")) return {t:`${n}: the general's peace`, p:`The army kept order after the founder died, and it is keeping order still. The founding document is displayed in a glass case in the capital, where it is admired and not consulted.`};
   if(h.has("dynasty")) return {t:`${n}: an inheritance`, p:`The founders' seats passed to their sons, and their sons' sons. ${n} is stable, and polite, and owned. The people who notice tend to leave.`};
   if(h.has("coerced")&&!h.has("abolished")&&!h.has("gradual")) return {t:`${n}: the lie it maintains`, p:`${n} is prosperous in the way that only a nation built on unpaid labour can be — prosperous for some. Its founding document is read aloud every independence day, by people who have learned not to hear one of its words.`};

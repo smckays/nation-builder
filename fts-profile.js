@@ -10,6 +10,9 @@
 // whatever save the device already had. It also shows the player's avatar and
 // name next to the game's "Fun Time Studio" link (a.studio), and reloads the game
 // if the player is switched in another tab. With no players set up it does nothing.
+//
+// It also keeps one window playing at a time (see the second part below). Add
+// data-one-window="off" to a game that handles that itself.
 (function () {
   var script = document.currentScript;
   var GAME = script && script.getAttribute('data-game');
@@ -72,5 +75,51 @@
     if (e.key !== REGISTRY) return;
     var now = registry();
     if (!now || now.active !== player.id) location.reload();
+  });
+})();
+
+// One window at a time. With a game open in two places (two tabs, or the installed
+// app and a browser tab), each copy saves over the other. The copy opened last
+// plays; any other is covered by a "Playing in another window" screen and its
+// writes to the game's save keys are ignored, until "Play here" takes over and
+// reloads from the latest save.
+(function () {
+  var script = document.currentScript;
+  var GAME = script && script.getAttribute('data-game');
+  var KEYS = ((script && script.getAttribute('data-keys')) || '').split(/\s+/).filter(Boolean);
+  if (!GAME || !KEYS.length || (script && script.getAttribute('data-one-window') === 'off')) return;
+  var OWNER = 'fts-window:' + GAME;
+  var me = Math.random().toString(36).slice(2);
+  var paused = false;
+
+  try {
+    var setItem = Storage.prototype.setItem, removeItem = Storage.prototype.removeItem;
+    Storage.prototype.setItem = function (k, v) { if (paused && this === localStorage && KEYS.indexOf(k) >= 0) return; return setItem.call(this, k, v); };
+    Storage.prototype.removeItem = function (k) { if (paused && this === localStorage && KEYS.indexOf(k) >= 0) return; return removeItem.call(this, k); };
+    localStorage.setItem(OWNER, me);
+  } catch (e) { return; }   // no storage: nothing to protect
+
+  function pause() {
+    if (paused) return;
+    paused = true;
+    var cover = document.createElement('div');
+    cover.setAttribute('role', 'dialog');
+    cover.setAttribute('aria-modal', 'true');
+    cover.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:16px;background:rgba(12,8,22,.82);font-family:system-ui,-apple-system,sans-serif';
+    cover.innerHTML = '<div style="max-width:360px;background:#1e1638;color:#f7f2ff;border:2px solid #3d2d6b;border-radius:18px;padding:22px;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.5)">'
+      + '<h2 style="margin:0 0 8px;font-size:1.25rem;color:#ffb83d">Playing in another window</h2>'
+      + '<p style="margin:0 0 16px;color:#b9add9;line-height:1.45">This game is open somewhere else, so this window has paused. That keeps your progress from being saved twice.</p>'
+      + '<button type="button" style="font:inherit;font-weight:700;border:0;border-radius:999px;padding:9px 20px;background:#ffb83d;color:#1a1030;cursor:pointer">Play here</button></div>';
+    cover.querySelector('button').addEventListener('click', function () {
+      try { localStorage.setItem(OWNER, me); } catch (e) {}
+      location.reload();
+    });
+    (document.body || document.documentElement).appendChild(cover);
+    cover.querySelector('button').focus();
+  }
+  addEventListener('storage', function (e) {
+    if (e.key === OWNER && e.newValue && e.newValue !== me) {
+      if (document.body) pause(); else document.addEventListener('DOMContentLoaded', pause);
+    }
   });
 })();

@@ -1,6 +1,6 @@
 # Nation Builder
 
-**Play it:** https://nation-builders.netlify.app (mirror: https://smckays.github.io/nation-builder/)
+**Play it:** https://nation-builders.netlify.app
 
 A single-file narrative game about founding a nation and following one family across fifty years.
 
@@ -26,11 +26,6 @@ All family text uses role tokens (`{F}` `{M}` `{S}` `{D}`, `{fam}`, `[[landed||l
 
 ## Publishing
 
-Every push to `main` deploys the tabletop version to two sites at once:
+Every push to `main` deploys the tabletop version to https://nation-builders.netlify.app. Netlify is linked to this repo and reads its build settings from `netlify.toml`. GitHub holds the code only; nothing is published there.
 
-| Site | How it deploys |
-| --- | --- |
-| https://nation-builders.netlify.app | Netlify, linked to this repo; build settings in `netlify.toml` |
-| https://smckays.github.io/nation-builder/ | GitHub Pages, via `.github/workflows/pages.yml` |
-
-Both publish the same two files: `tabletop.html` (served as `index.html`) and `engine.js`. The other versions stay in the repo but are not published.
+The site contains two files: `tabletop.html` (served as `index.html`) and `engine.js`. The other versions stay in the repo but are not published.

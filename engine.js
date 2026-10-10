@@ -857,6 +857,82 @@ const PAYOFFS = [
 CRISES.push(...PAYOFFS);
 
 // ═══════════════════════════════════════════════════════════
+// THE HARROWS — the rival family (lore bible: "The rival family").
+// The landowner with the deep well. Their reactions usually pull the
+// opposite way from the player's family. Silas dies in Year 30, Odile in 41.
+// ═══════════════════════════════════════════════════════════
+const HARROWS = [
+  {k:"silas",    name:"Silas",    age:56, role:"Landowner, 400 acres and the deep well", dies:30},
+  {k:"odile",    name:"Odile",    age:49, role:"Keeps the estate's books", dies:41},
+  {k:"lucan",    name:"Lucan",    age:24, role:"Investor; owns the iron foundry"},
+  {k:"clemence", name:"Clemence", age:16, role:"The youngest; the daughter's age-mate"}
+];
+const harrowAt = (k, year) => { const p=HARROWS.find(x=>x.k===k); return {...p, now:p.age+year-1, alive:!p.dies||year<p.dies}; };
+const harrowIntro = () => "[[Our four hundred acres border {Fhold}. Our well is the deepest in the district. We intend to be good neighbours.||Our family owns the field {F} leases. He pays on time. We intend to be fair landlords.]]";
+
+// One reaction per choice, keyed by crisis id. [speaker, line]
+const HARROW_REACT = {
+  badyear:     [["silas","Relief from the treasury. Paid for by whom, I wonder? By the men who kept their wells."],["silas","A fair arrangement: water for concessions. Everyone gets something, and we get the concessions."],["silas","We bought the two farms below the ridge this week. Someone has to keep the land in use."]],
+  landgrab:    [["lucan","The registry opened at nine. Our clerks were there at eight."],["lucan","Father's investors will not forget this. Neither will I."],["silas","Men with rifles on my boundary. I asked the government for law and it sent me silence."]],
+  school:      [["odile","An inspectorate. I've paid for Delia's slates for nine years in secret. Perhaps now I can do it openly."],["odile","The administrator is gone. Good. He was always a fool."],["odile","The parish school will take the children. Some of them."]],
+  nativism:    [["clemence","I went to the oath with the girls from the valley. Mother says it wasn't my place. It was."],["silas","Two men fined for a window. That is the law working. Nothing more is needed."],["lucan","We've lost the best metalworker in the valley. The foundry will feel it for years."]],
+  petition:    [["silas","The families who worked our fields under contract are free. I wish them well. I do not know who will bring in the harvest."],["odile","The petition is burned and the square is quiet. I don't like how quiet."],["silas","A committee. Good. Committees are where questions go to grow old."]],
+  flood:       [["lucan","They paid me a fair price for the valley. I was going to sell it anyway. I tell myself that."],["lucan","Housing in the city. Sensible. The valley will be worth more empty."],["lucan","Six months' notice and a payment. Generous, my agent says. I have never seen the place."]],
+  strike:      [["lucan","Contracts with a committee. Father would have closed the foundry first."],["lucan","The gates are open and the work has resumed. I did not enjoy watching it."],["lucan","A board to settle disputes. Expensive, slow, and probably wise."]],
+  succession:  [["odile","An election for the chair. Silas would have called it vulgar. I think it was brave."],["lucan","The heir dined with us last month. Continuity is good for business."],["lucan","The general keeps order. Order is good for business. I keep saying that."]],
+  march:       [["clemence","I walked nine days with the tenants' wives. Father hasn't spoken to me since. It was worth it."],["clemence","The men got the vote. I walked nine days to be told to wait."],["clemence","I was at the bridge too. They let me go because of my name. They didn't let the others go."]],
+  rising:      [["lucan","Abolished under fire. We will sue, of course. I expect we will lose."],["clemence","The army is camped on our land, defending us. I have never felt less defended."],["lucan","Twenty years. Long enough to plan. Short enough to frighten Mother."]],
+  titlesuits:  [["silas","Our title comes from the Crown's own book. The court agreed. Of course it did."],["silas","Half our estate rests on a Crown grant. Half our estate is now a question."],["silas","Twenty years' use makes a title. Our tenants have worked the east field for thirty. Well."]],
+  compensation:[["lucan","The treasury pays us for what we lost. I do not feel richer. I feel watched."],["clemence","They took our unused acres for the freed families. Our unused acres. I never once walked them."],["lucan","Nobody paid, nobody gained. The fields are half-worked and everyone is waiting."]],
+  seconddry:   [["lucan","Relief again. Our taxes, their wells."],["lucan","A relief code. Rules I can plan around. Thank God."],["clemence","The north stopped paying its taxes. I can't say I blame them."]],
+  generalstrike:[["lucan","Unions in every trade. The foundry will survive it. I'm less sure about my temper."],["clemence","Soldiers in the streets, guarding my brother's foundry. I can't walk past it."],["lucan","A labour code. Twenty years ago I'd have fought it. This time I helped write it."]],
+  railway:     [["lucan","The line crosses our lower fields too. Market value. I'll be paid more than most."],["lucan","Eleven extra miles to spare the smallholders. The company's bonds fell two points."],["clemence","They took the farms at last decade's prices. My brother calls it progress. I call it a robbery with a timetable."]]
+};
+HARROW_REACT.compensation2 = HARROW_REACT.compensation;
+// The reaction to a played choice, moved to a living Harrow if the named one has died
+function harrowReaction(cr, i){
+  const r=(HARROW_REACT[cr.id]||[])[i]; if(!r) return null;
+  let k=r[0]; if(!harrowAt(k,cr.year).alive) k=harrowAt("odile",cr.year).alive&&k==="silas"?"odile":"lucan";
+  return {k, q:r[1]};
+}
+const harrowNow25 = () => H().has("grantBooksUpheld")||H().has("consolidation") ? "Father still signs the leases. I decide which ones." : "Father still signs the leases. Fewer of them every year.";
+function harrowFate(){
+  const h=H(), m=state.m;
+  if(h.has("civilWar")) return {k:"clemence", q:"Our house burned in Year 36, in the war. I did not rebuild it. I rebuilt the valley school instead, and I teach there on Thursdays."};
+  if(h.has("junta")||h.has("dynasty")||h.has("martialLaw")) return {k:"lucan", q:"My daughter married into the governing family. We are closer to power than Father ever was. I have stopped asking what it is for."};
+  if(h.has("landToTillers")||h.has("crownTitlesVoided")||h.has("freedLand")||(h.has("abolished")&&h.has("coerced"))) return {k:"clemence", q:"We have a big house, a portrait gallery and sixty acres. Lucan sells a field every few years to keep the roof on. I find I sleep better."};
+  if(h.has("grantBooksUpheld")||(m.pros>=60&&m.eq<40)) return {k:"lucan", q:"My grandson will own most of the valley. Everyone in it works for us, or for someone who does. Father would be proud. I am mostly tired."};
+  return {k:"clemence", q:"We are still the largest landowners in the district and no longer the most important people in it. I sit on the council. Lucan's foundry employs four hundred. We have become ordinary, and it suits us."};
+}
+
+// ═══════════════════════════════════════════════════════════
+// THE NEIGHBOURS — recurring cast (lore bible: "The recurring cast").
+// A cast member counts as met once the crisis that introduces them has
+// been played. `now25` is their news at Year 25; `fate` their Year 50 line.
+// ═══════════════════════════════════════════════════════════
+const NEIGHBOURS = [
+  {k:"yusuf", name:"Yusuf", met:h=>state.used.has("nativism"),
+   now25:h=>h.has("yusufCitizen")?"Yusuf has two new apprentices, and a vote.":h.has("yusufLeft")?"Yusuf's shop is still empty. Amara writes every season.":"Yusuf still keeps a cudgel behind the counter.",
+   fate:h=>h.has("yusufCitizen")?"Yusuf sat on the valley council until he was seventy. His grandson runs the shop and keeps his tools on the wall.":h.has("yusufLeft")?(h.has("yusufInvited")?"Yusuf died in his harbour shop abroad. Amara came back in Year 31 with her children, and stayed.":"Yusuf died in his harbour shop abroad. Amara's letters stopped in time; nobody is sure why."):"Yusuf kept his shop for forty years and the cudgel behind the counter for all of them. He was never made to feel at home, and never left."},
+  {k:"delia", name:"Delia", met:h=>state.used.has("school"),
+   now25:h=>h.has("oversight")?"Delia examines schools for the inspectorate now.":h.has("schoolsLost")?"Delia teaches nine children in her kitchen.":"Delia is still at the valley school, slower on the stairs.",
+   fate:h=>h.has("oversight")?"Delia became the nation's first school inspector. Her reports are still read aloud to new inspectors.":h.has("schoolsLost")?(h.has("schoolsReopened")?"Delia taught in her kitchen for twenty years and lived to see the valley schools reopen. She was in the front row.":"Delia taught in her kitchen until she died, poor. Two of her pupils named daughters after her."):"Delia taught at the valley school for thirty-one years. The new school is named after her."},
+  {k:"cassius", name:"Cassius", met:h=>state.used.has("petition"),
+   now25:h=>h.has("abolished")?"Cassius is standing for the assembly.":h.has("suppressed")?"Nobody says Cassius's name aloud. His son says it often.":"Cassius's committee meets twice a year, and studies.",
+   fate:h=>h.has("abolished")&&since("abolished")<=24?"Cassius sat in the assembly for two terms. The petition he wrote hangs in its entrance hall.":h.has("suppressed")?"Cassius disappeared from the record in Year 19. His son did not.":"Cassius died at fifty-one, never a legal person in the nation of his birth. His son carried the rest of the argument."},
+  {k:"marcus", name:"Marcus", met:h=>state.used.has("rising"),
+   fate:h=>h.has("civilWar")?"Marcus was killed in the second year of the war. Both sides now claim him.":h.has("gradual")?"Marcus led the twenty-year wait, and was there on the morning the last bond ended.":"Marcus signed the first printed copy of the act of abolition. He never ran for office; he said he had done his part."},
+  {k:"osric", name:"Osric", met:h=>state.used.has("printer"),
+   fate:h=>h.has("pressFree")?"Osric's shop became the nation's first free newspaper. Its masthead still carries his name.":h.has("pressCowed")?"Osric was fined into bankruptcy and his press was sold for scrap. Someone bought the type and kept printing at night.":"Osric kept printing, carefully, for the rest of his life."},
+  {k:"tomas", name:"Tomas", met:h=>state.used.has("veterans")&&!(h.has("S_soldier")||h.fam.sonSoldier),
+   fate:h=>h.has("veteransHonored")?"Tomas farmed his forty acres until he was eighty.":h.has("veteransBetrayed")?"Tomas was one of the seventeen. He never apologised, and never regretted it.":"Tomas took the money and opened a carter's yard. He named his best horse after the land office."},
+  {k:"pell", name:"Edric Pell, the clerk", met:h=>state.used.has("badyear"),
+   now25:h=>h.has("oversight")?"Edric Pell, the clerk, has applied to join the inspectorate.":"Edric Pell, the clerk, still keeps the district books.",
+   fate:h=>h.has("oversight")?"Edric Pell joined the inspectorate and spent his last years auditing the offices he used to work in.":h.has("junta")||h.has("martialLaw")?"Edric Pell kept lists for the general's government. Nobody in the valley speaks to his family.":"Edric Pell retired on a small pension. His books are in the district archive, and the {fam} family's name is in one of them."}
+];
+const neighboursMet = () => { const h=H(); return NEIGHBOURS.filter(n=>n.met(h)); };
+
+// ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
 const rnd = a => a[Math.floor(Math.random()*a.length)];

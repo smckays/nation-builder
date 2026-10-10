@@ -65,6 +65,14 @@ button{font:inherit;color:inherit;}
 .bubble.impact::before{border-bottom-color:var(--gold);}
 .bubble.fate{font-size:13px;}
 .meeple.lit{background:rgba(224,166,58,.28);}
+.harrows{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.hp{background:rgba(0,0,0,.14);border-radius:10px;padding:6px 4px;text-align:center;color:#cfe3d6;font-family:var(--display);font-size:11px;transition:background .3s;}
+.hp svg{width:22px;height:26px;display:block;margin:0 auto 2px;}
+.hp b{display:block;font-weight:800;font-size:12px;color:#eef4ee;}
+.hp.speaking{background:rgba(255,255,255,.14);}
+.bubble .who{display:block;font-family:var(--display);font-style:normal;font-weight:800;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-bottom:2px;}
+.neigh p{font-size:13.5px;line-height:1.55;padding:6px 0;border-top:1px dashed #d9cfbb;font-style:normal;color:var(--ink);}
+.neigh p:first-of-type{border-top:none;}
 
 /* center */
 .center{display:flex;flex-direction:column;align-items:center;min-width:0;}
@@ -165,6 +173,7 @@ button{font:inherit;color:inherit;}
   .faults.open{display:block!important;position:absolute;left:12px;right:12px;top:100%;max-height:50vh;overflow:auto;background:rgba(24,48,37,.98);padding:10px;border-radius:0 0 12px 12px;margin:0;}
   .faults.open .fault{min-width:0;margin-bottom:8px;}
 }
+@media(max-width:1020px){ .harrow-wrap{display:none;} }
 @media(max-width:560px){ .board{grid-template-columns:1fr 1fr;} #top .t span{display:none;} }
 </style>
 </head>
@@ -181,6 +190,7 @@ button{font:inherit;color:inherit;}
   <aside class="side side-r">
     <div class="label" id="fam-label">The Family</div>
     <div class="fam" id="fam"></div>
+    <div class="harrow-wrap"><div class="label" style="margin-top:20px">The Harrows · the neighbours</div><div class="harrows" id="harrows"></div><div class="bubble" id="hb"></div></div>
   </aside>
 </div>
 
@@ -350,7 +360,7 @@ const STONE=`<svg viewBox="0 0 36 40"><path d="M8 38 L8 14 Q18 0 28 14 L28 38 Z"
 function buildFamily(){
   $('fam').innerHTML=ROLES.map(r=>{ const m=state.family.members[ROLE_IDX[r]];
     return `<div class="meeple" id="m-${r}"><div class="row"><span id="ic-${r}">${MEEPLE(COLORS[r])}</span><div><b id="nm-${r}"></b><span class="role">${m.role.split(' — ')[0]} · ${m.role.split(' — ')[1]||''}</span></div></div><div class="bubble" id="b-${r}"></div></div>`; }).join('');
-  updateAges();
+  buildHarrows(); updateAges();
   ROLES.forEach(r=>{
     $('m-'+r).onclick=()=>{ if(narrow()&&lastSaid[r]) say(r,...lastSaid[r]); };
     $('b-'+r).onclick=e=>{ if(narrow()){ e.stopPropagation(); $('b-'+r).className='bubble'; } };
@@ -359,7 +369,15 @@ function buildFamily(){
 const famInline=(fn)=>`<div class="inline-only inline-fam">${ROLES.map(r=>`<p><b>${first(r)}.</b> ${fn(r)}</p>`).join('')}</div>`;
 function updateAges(dead=[]){
   ROLES.forEach(r=>{ const m=state.family.members[ROLE_IDX[r]]; $('nm-'+r).textContent=`${m.name} · ${dead.includes(r)?'†':ageAt(r,state.year)}`; $('ic-'+r).innerHTML=dead.includes(r)?STONE:MEEPLE(COLORS[r]); });
+  updateHarrows();
 }
+// The Harrows: a small row of pieces with one shared bubble
+const HCOLOR='#7d6b8a';
+function buildHarrows(){ $('harrows').innerHTML=HARROWS.map(p=>`<div class="hp" id="hp-${p.k}"><span id="hic-${p.k}"></span><b>${p.name}</b><span id="hag-${p.k}"></span></div>`).join(''); harrowHush(); }
+function updateHarrows(){ HARROWS.forEach(p=>{ const a=harrowAt(p.k,state.year); $('hic-'+p.k).innerHTML=a.alive?MEEPLE(HCOLOR):STONE; $('hag-'+p.k).textContent=a.alive?a.now:'†'; }); }
+function harrowSay(k,text,kind='say'){ const b=$('hb'); HARROWS.forEach(p=>$('hp-'+p.k).classList.toggle('speaking',p.k===k)); b.className='bubble '+kind; b.innerHTML=`<span class="who">${harrowAt(k,state.year).name} Harrow</span>${text}`; sfx.pop(); void b.offsetWidth; b.classList.add('show'); }
+function harrowHush(){ $('hb').className='bubble'; HARROWS.forEach(p=>$('hp-'+p.k).classList.remove('speaking')); }
+const neighNote=(title,lines)=>lines.length?`<div class="note neigh"><b>${title}</b>${lines.map(l=>`<p>${l}</p>`).join('')}</div>`:'';
 const narrow=()=>matchMedia('(max-width:1020px)').matches;
 const lastSaid={};
 function say(r,text,kind='say'){ if(!r) return; lastSaid[r]=[text,kind]; if(narrow()&&kind!=='fate') hush(r); const b=$('b-'+r); b.className='bubble '+kind; b.innerHTML=text; sfx.pop(); void b.offsetWidth; b.classList.add('show'); $('m-'+r).classList.toggle('lit',kind==='impact'); }
@@ -451,6 +469,7 @@ function newGame(){
     <div class="note"><b>How to play</b>Ten founding cards, then fifty years of crises. Hover a card to see where the nation's cubes would move; click to choose, click again (or press Enter) to play. Your family will tell you what they think.</div>
     <div class="actions"><button class="primary" onclick="showQuestion(0)">Begin the founding →</button></div></div>`);
   ROLES.forEach((r,i)=>setTimeout(()=>say(r,state.family.members[ROLE_IDX[r]].desc,'say'),300+i*180));
+  setTimeout(()=>harrowSay('silas',`“${T(harrowIntro())}”`),1250);
   primaryKeys();
 }
 
@@ -467,7 +486,7 @@ function showQuestion(qi){
     ${tag?`<div class="note"><b>In ${state.nation.name}</b>${T(q.geo[tag])}</div>`:''}
     ${qi>0?`<div class="actions" style="justify-content:flex-start;padding-top:4px"><button class="link" onclick="showQuestion(${qi-1})">← Back to ${QUESTIONS[qi-1].cat}</button></div>`:''}
   </div>${hand(q.choices,col)}`);
-  hush(); say(q.witness.r,`“${T(q.witness.q)}”`,'say');
+  hush(); harrowHush(); say(q.witness.r,`“${T(q.witness.q)}”`,'say');
   wireHand(q.choices,{
     onSelect:i=>{ const c=q.choices[i], sp=speakerFor(c.fi)||q.witness.r; hush(sp); say(sp,T(c.fi),'impact'); $('played-x').innerHTML=`<b>Sets in motion</b>${T(c.x)}`; },
     onPlay:i=>{ state.answers[qi]=i; recomputeFounding(qi+1); updateBoard(); updateFaults(); if(qi<9) showQuestion(qi+1); else ratify(); }
@@ -487,7 +506,7 @@ function startEra(era){ state.era=era; state.queue=pickCrises(era); state.ci=0; 
 function nextCrisis(){
   if(state.ci>=state.queue.length) return state.era===2?midpoint():state.era===3?startEra(4):epilogue();
   const cr=state.queue[state.ci], h=H(); state.used.add(cr.id); state.year=cr.year;
-  setYear(cr.year); updateAges(); updateBoard(); hush();
+  setYear(cr.year); updateAges(); updateBoard(); hush(); harrowHush();
   sfx.draw();
   center(`<div class="card draw" style="transform:rotate(-1.2deg)"><div class="frame"><div class="band" style="background:${cr.payoff?'var(--gold);color:var(--ink)':'var(--red)'}"><span>${cr.payoff?'Consequence':'Crisis'} · ${cr.type}</span><span>Year ${cr.year}</span></div><div class="art">${(CRISIS_ART[cr.id]||ERA_ART.mid)()}</div></div>
     <h1>${cr.title}</h1><div class="story">${paras(T(cr.story(h)))}</div>
@@ -498,9 +517,11 @@ function nextCrisis(){
     onPlay:i=>{
       const c=applyCrisisChoice(cr,i); updateBoard(); updateFaults();
       const sp=speakerFor(c.fam); hush(sp); if(sp) say(sp,T(c.fam),'impact');
+      const hr=harrowReaction(cr,i); if(hr) setTimeout(()=>harrowSay(hr.k,`“${T(hr.q)}”`),650);
       center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--ink)"><span>${cr.title} · what happened</span><span>Year ${cr.year}</span></div></div>
         <h1 class="q">${T(c.l)}</h1><div class="story"><p>${T(c.after)}</p></div>
         ${sp?'':`<div class="note"><b>The ${state.family.surname} family</b>${T(c.fam)}</div>`}
+        ${hr?`<div class="note inline-only"><b>${harrowAt(hr.k,cr.year).name} Harrow</b>“${T(hr.q)}”</div>`:''}
         <div class="actions"><button class="primary" onclick="state.ci++;nextCrisis()">${state.ci===state.queue.length-1?(state.era===2?'Twenty-five years on →':'Toward Year 50 →'):'Draw the next card →'}</button></div></div>`);
       primaryKeys();
     }
@@ -511,9 +532,10 @@ function midpoint(){
   state.year=25; state.snapshots[25]={...state.m}; setYear(25); updateAges(); updateBoard(null,state.snapshots[1]);
   center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--gold);color:var(--ink)"><span>A generation in</span><span>Year 25</span></div><div class="art">${ERA_ART.mid()}</div></div>
     <h1>Twenty-five years on</h1><div class="story"><p>The founders are old men now, or gone. The children who were small at the founding are grown, with opinions of their own about what was decided on their behalf.</p></div>
-    <div class="note"><b>On the board</b>The thin line on each track marks where ${state.nation.name} stood in Year One. Your family has news.</div>${famInline(r=>T(vignette(r)))}
+    <div class="note"><b>On the board</b>The thin line on each track marks where ${state.nation.name} stood in Year One. Your family has news.</div>${famInline(r=>T(vignette(r)))}${neighNote('Neighbours at Year 25',neighboursMet().filter(n=>n.now25).map(n=>T(n.now25(H()))))}
     <div class="actions"><button class="primary" onclick="startEra(3)">The second generation →</button></div></div>`);
   ROLES.forEach((r,i)=>setTimeout(()=>say(r,T(vignette(r)),'say'),250+i*200));
+  setTimeout(()=>harrowSay('lucan',`“${harrowNow25()}”`),1100);
   primaryKeys();
 }
 
@@ -521,11 +543,12 @@ function epilogue(){
   state.year=50; setYear(50); const v=verdict();
   updateAges(["F","M"]); updateBoard(null,state.snapshots[1]); hush();
   ROLES.forEach((r,i)=>setTimeout(()=>say(r,T(fate(r)),'fate'),300+i*250));
+  const hf=harrowFate(); harrowHush(); setTimeout(()=>harrowSay(hf.k,`“${T(hf.q)}”`,'fate'),1400);
   const show=tab=>center(`<div class="card ${tab?'':'deal'}"><div class="frame"><div class="band" style="background:var(--plum)"><span>Fifty years on</span><span>Year 50</span></div><div class="art">${ERA_ART.end()}</div></div>
     <h1>${v.t}</h1>
     ${tab==='record'
       ? `<div class="record">${state.log.map(e=>`<div class="r"><div class="k">${e.k}</div><div>${e.t?`<small>${e.t}</small>`:''}${e.v}</div></div>`).join('')}</div>`
-      : `<div class="verdict">${v.p}</div><div class="note"><b>The family</b>Their stories are beside their names. The line on each track marks Year One.</div>${famInline(r=>T(fate(r)))}`}
+      : `<div class="verdict">${v.p}</div><div class="note"><b>The family</b>Their stories are beside their names. The line on each track marks Year One.</div>${famInline(r=>T(fate(r)))}<div class="inline-only">${neighNote('The Harrows',[`${harrowAt(hf.k,50).name}: “${T(hf.q)}”`])}</div>${neighNote('What became of the neighbours',neighboursMet().map(n=>T(n.fate(H()))))}`}
     <div class="actions"><button class="link" onclick="(${tab==='record'?'epShow()':"epShow('record')"})">${tab==='record'?'← Back to the ending':'Read the record'}</button><button class="primary" onclick="newGame()">Build another nation →</button></div></div>`);
   window.epShow=show; show(); primaryKeys();
 }

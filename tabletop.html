@@ -34,6 +34,15 @@ button{font:inherit;color:inherit;}
 #top .studio:hover,#top .studio:focus-visible{opacity:1;}
 .ghost-btn{background:none;border:1.5px solid rgba(207,227,214,.4);color:#cfe3d6;border-radius:999px;padding:5px 12px;font-family:var(--display);font-weight:600;font-size:12px;cursor:pointer;}
 .ghost-btn:hover{border-color:#cfe3d6;}
+.almanac{padding:4px 6px 0;}
+.ay{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:9px 0;border-top:1px dashed #d9cfbb;opacity:0;animation:yearIn .45s ease forwards;}
+.ay:first-child{border-top:none;}
+.ay .yr{font-family:var(--display);font-weight:800;font-size:13px;color:var(--ink-2);padding-top:2px;}
+.ai{font-size:14px;line-height:1.55;padding-left:16px;position:relative;}
+.ai+.ai{margin-top:5px;}
+.ai::before{content:'';position:absolute;left:0;top:7px;width:8px;height:8px;border-radius:50%;background:var(--c,#9a9384);}
+.ai.harrow{--c:#7d6b8a;} .ai.neighbour{--c:var(--teal);} .ai.death{font-style:italic;}
+@keyframes yearIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translate(-50%,-20px);background:var(--card);color:var(--ink);font-family:var(--display);font-weight:600;font-size:13px;padding:9px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:50;max-width:calc(100vw - 32px);text-align:center;}
 #toast.show{opacity:1;transform:translate(-50%,0);}
 .ghost-btn:disabled{opacity:.35;cursor:default;border-color:rgba(207,227,214,.4);}
@@ -384,7 +393,8 @@ function buildFamily(){
   });
 }
 const famInline=(fn)=>`<div class="inline-only inline-fam">${ROLES.map(r=>`<p><b>${first(r)}.</b> ${fn(r)}</p>`).join('')}</div>`;
-function updateAges(dead=[]){
+const deadAt = y => ["F","M"].filter(r=>state.deathYear&&state.deathYear[r]&&state.deathYear[r]<=y);
+function updateAges(dead=deadAt(state.year)){
   ROLES.forEach(r=>{ const m=state.family.members[ROLE_IDX[r]]; $('nm-'+r).textContent=`${m.name} · ${dead.includes(r)?'†':ageAt(r,state.year)}`; $('ic-'+r).innerHTML=dead.includes(r)?STONE:MEEPLE(COLORS[r]); });
   updateHarrows();
 }
@@ -463,12 +473,13 @@ function wireHand(choices,{onSelect,onPlay}){
   $('play-btn').onclick=()=>{ if(sel!=null) play(sel); };
   keyHandler=e=>{ const n=+e.key; if(n>=1&&n<=cards.length){ if(sel!==n-1) cards[n-1].click(); } else if(e.key==='Enter'&&sel!=null){ e.preventDefault(); play(sel); } };
 }
-function center(html){ $('center').innerHTML=html; window.scrollTo({top:0,behavior:'smooth'}); }
+let almanacTimers=[];
+function center(html){ almanacTimers.forEach(clearTimeout); almanacTimers=[]; $('center').innerHTML=html; window.scrollTo({top:0,behavior:'smooth'}); }
 let keyHandler=null;
 // ── Undo: every decision saves the game as it stood, plus how to show that card again ──
 let history=[];
 const copyState = st => ({...st, m:{...st.m}, flags:new Set(st.flags), flagYear:{...st.flagYear}, used:new Set(st.used),
-  log:[...st.log], queue:[...(st.queue||[])], snapshots:{...st.snapshots}, answers:[...st.answers]});
+  log:[...st.log], queue:[...(st.queue||[])], snapshots:{...st.snapshots}, answers:[...st.answers], deathYear:{...(st.deathYear||{})}, deathShown:{...(st.deathShown||{})}, newsUsed:[...(st.newsUsed||[])]});
 function remember(screen){ history.push({snap:copyState(state), screen}); $('undo-btn').disabled=false; }
 function undo(){
   if(!history.length) return;
@@ -541,8 +552,15 @@ function ratify(){
 }
 
 function startEra(era){ state.era=era; state.queue=pickCrises(era); state.ci=0; setYear(state.year); nextCrisis(); }
+const needsAlmanac = y => y-state.year>1 && state.almanacTo!==y;
 function nextCrisis(){
-  if(state.ci>=state.queue.length) return state.era===2?midpoint():state.era===3?startEra(4):epilogue();
+  if(state.ci>=state.queue.length){
+    if(state.era===3) return startEra(4);
+    const target=state.era===2?25:50;
+    if(needsAlmanac(target)) return showAlmanac(target);
+    return state.era===2?midpoint():epilogue();
+  }
+  if(needsAlmanac(state.queue[state.ci].year)) return showAlmanac(state.queue[state.ci].year);
   const cr=state.queue[state.ci], h=H(); state.used.add(cr.id); state.year=cr.year;
   setYear(cr.year); updateAges(); updateBoard(); hush(); harrowHush();
   sfx.draw();
@@ -558,6 +576,25 @@ function nextCrisis(){
     }
   });
   save({k:'crisis',ci:state.ci});
+}
+// The years between: each year appears in turn, and the clock and the ages tick with it
+function showAlmanac(target){
+  const from=state.year+1, to=target-1;
+  // generated once per gap and kept in the save, so resuming shows exactly the same years
+  if(!(state.almanac&&state.almanac.from===from&&state.almanac.to===to)) state.almanac={from, to, years:almanacYears(from,to)};
+  const years=state.almanac.years;
+  state.almanacTo=target; hush(); harrowHush();
+  const next = target===25?'Twenty-five years on →':target===50?'Fifty years on →':'Draw the next card →';
+  center(`<div class="card deal"><div class="frame"><div class="band" style="background:#5c564c"><span>The years between</span><span>${from===to?`Year ${from}`:`Years ${from}–${to}`}</span></div></div>
+    <h1 class="q">${from===to?`Year ${from}`:`Year ${from} to Year ${to}`}</h1>
+    <div class="almanac">${years.map((y,i)=>`<div class="ay" style="animation-delay:${.2+i*.4}s"><div class="yr">Year ${y.year}</div><div>${y.items.map(it=>`<p class="ai ${it.kind}${it.death?' death':''}"${it.r?` style="--c:${COLORS[it.r]}"`:''}>${T(it.text)}</p>`).join('')}</div></div>`).join('')}</div>
+    <div class="actions"><button class="primary" onclick="nextCrisis()">${next}</button></div></div>`);
+  save({k:'almanac',to:target});
+  years.forEach((y,i)=>almanacTimers.push(setTimeout(()=>{
+    state.year=y.year; setYear(y.year); updateAges(); sfx.cube();
+    y.items.filter(it=>it.r).forEach(it=>{ const el=$('m-'+it.r); el.classList.add('lit'); almanacTimers.push(setTimeout(()=>el.classList.remove('lit'),900)); });
+  },200+i*400)));
+  primaryKeys();
 }
 // The result card for a played crisis choice (effects already applied)
 function showResult(cr,i){
@@ -603,7 +640,7 @@ function epilogue(){
 // ═══════════════════════════════════════════════════════════
 const SAVE_KEY='nation-builder:tabletop:v1';
 const pack = st => ({nation:st.nation.name, family:st.family.surname, qi:st.qi, answers:st.answers, m:st.m, flags:[...st.flags], flagYear:st.flagYear,
-  used:[...st.used], log:st.log, queue:(st.queue||[]).map(c=>c.id), ci:st.ci, era:st.era, year:st.year, snapshots:st.snapshots});
+  used:[...st.used], log:st.log, queue:(st.queue||[]).map(c=>c.id), ci:st.ci, era:st.era, year:st.year, snapshots:st.snapshots, seed:st.seed, deathYear:st.deathYear||{}, deathShown:st.deathShown||{}, newsUsed:st.newsUsed||[], almanacTo:st.almanacTo, almanac:st.almanac||null});
 function unpack(o){
   const nation=NATIONS.find(n=>n.name===o.nation), family=FAMILIES.find(f=>f.surname===o.family);
   if(!nation||!family) throw new Error('unknown nation or family');
@@ -620,6 +657,7 @@ function showScreen(d){
     case 'ratify': return ratify();
     case 'crisis': state.ci=d.ci; return nextCrisis();
     case 'result': state.ci=d.ci; return showResult(state.queue[d.ci], d.i);
+    case 'almanac': return showAlmanac(d.to);
     case 'mid': return midpoint();
     case 'end': return epilogue();
   }

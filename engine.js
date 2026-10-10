@@ -933,6 +933,137 @@ const NEIGHBOURS = [
 const neighboursMet = () => { const h=H(); return NEIGHBOURS.filter(n=>n.met(h)); };
 
 // ═══════════════════════════════════════════════════════════
+// THE ALMANAC — what happens in the years between cards.
+// almanacYears(from, to) lists each year with its events: family
+// milestones (by age), the Harrows and the neighbours (fixed years),
+// and national news that follows the measures and flags. Text is
+// seeded per game, so undo and resume show the same years. A parent's
+// death is recorded the first time the almanac reaches it, so the
+// ending always agrees.
+// ═══════════════════════════════════════════════════════════
+const ALMANAC_GRANDCHILDREN = {   // lore bible: the third generation
+  Vael:   {S:{kind:"son", name:"Aldo"},  D:{kind:"daughter", name:"Maren"}},
+  Ossian: {S:{kind:"daughter", name:"Ilse"}, D:{kind:"son", name:"Bren, after his grandfather"}},
+  Tarn:   {S:{kind:"son", name:"Edvin, after his grandfather"}, D:{kind:"daughter", name:"Ada"}}
+};
+const goodSchooling = h => h.has("publicEd")||h.has("hybridEd")||h.has("churchServices")||h.has("schoolsReopened");
+// A parent's death year (Years 40–49), from the nation as it stands; fixed once recorded
+function parentDeathYear(r){
+  if(state.deathYear&&state.deathYear[r]) return state.deathYear[r];
+  const m=state.m, h=H(), base=Math.round((m.pros+m.eq)/20);
+  return r==="F" ? 40+Math.max(0,Math.min(9, base-(h.has("F_lostLand")?3:0)))
+                 : 41+Math.max(0,Math.min(8, base-(h.has("motherFever")?4:0)));
+}
+// Family milestones: [role, age it happens at, text or (h)=>text|null]
+const FAMILY_MILESTONES = [
+  ["S",20,"{S} earns a full man's wage for the first time, and gives half of it to {M} without being asked."],
+  ["S",25,"{S} marries. The wedding is in [[the barn||the yard]], and {M} cooks for three days."],
+  ["S",27,()=>{ const g=ALMANAC_GRANDCHILDREN[state.family.surname].S; return `{S}'s first child is born, a ${g.kind} named ${g.name}.`; }],
+  ["S",33,h=>state.m.pros>=50?"{S} buys a house of his own, three streets from his parents'.":"{S} moves his family into two rented rooms in town. The rent takes a third of his wage."],
+  ["S",45,"{S}'s hair goes grey at the temples, exactly where his father's did."],
+  ["S",52,"{S}'s eldest starts work. {S} walks there with them on the first morning and pretends he was going that way."],
+  ["D",12,h=>h.has("apprenticeEd")?"{D} is apprenticed, as the law expects. She is good at the work and hates it.":h.has("privateEd")?"{D} reads whatever books {M} can borrow, and some that {M} doesn't know about.":"{D} finishes her first schoolbook and starts the next one the same evening."],
+  ["D",16,h=>goodSchooling(h)&&!h.has("schoolsLost")?"{D} wins the district essay prize. The prize is a book, which she has already read.":"{D} starts work [[on the family's land||as a maid at the Harrows' house, where Clemence lends her books]]."],
+  ["D",20,h=>goodSchooling(h)&&state.m.inc>=45?"{D} leaves for the capital to study. {F} carries her trunk to the coach and says nothing the whole way.":"{D} turns down a proposal of marriage. {F} does not understand why. {M} does."],
+  ["D",27,"{D} marries a man who reads as much as she does. They argue about books at their own wedding."],
+  ["D",29,()=>{ const g=ALMANAC_GRANDCHILDREN[state.family.surname].D; return `{D}'s first child is born, a ${g.kind} named ${g.name}.`; }],
+  ["D",40,h=>state.m.inc>=55?"{D} is asked to speak at the district meeting, the first woman ever asked. She speaks for nine minutes.":"{D} writes a letter to the newspaper under her husband's name. It is printed, and quoted in the assembly."],
+  ["F",60,"{F} hands the heavy work to {S}. He does not hand over his opinions about it."],
+  ["F",70,"{F} stops walking to market. The market starts coming to him: neighbours call in every afternoon with the news."],
+  ["M",55,"{M} still {MworkNow}, now with a girl from the next farm learning at her side."],
+  ["M",66,"{M} starts writing down the family's recipes, and then, without telling anyone, its history."]
+];
+// The Harrows and the neighbours: [year, kind, text, condition?]
+const VALLEY_EVENTS = [
+  [3,"neighbour","Yusuf the metalworker takes on a second apprentice. His hammer is the first sound in the valley every morning."],
+  [4,"harrow","Lucan Harrow comes home from Lisse with a wife, two crates of books and plans for the whole estate."],
+  [6,"neighbour","Delia's valley school takes its hundredth pupil.", h=>!h.has("schoolsLost")],
+  [12,"harrow","Clemence Harrow is sent to school in the capital. She writes to {D} more often than to her mother."],
+  [15,"neighbour","A man named Cassius is seen at the district office every week, asking for copies of the founding document.", h=>h.has("coerced")||h.has("indenture")],
+  [20,"harrow","Lucan Harrow opens the iron foundry by the river. Four hundred men apply for two hundred places."],
+  [22,"neighbour","Amara's first letter arrives, from a harbour town across the sea. {D} reads it until the paper goes soft.", h=>h.has("yusufLeft")],
+  [26,"neighbour","Osric the printer starts the capital's first daily newspaper. The valley gets it two days late."],
+  [30,"harrow","Silas Harrow dies at eighty-five. Half the valley goes to the funeral; the other half goes to see who inherits."],
+  [32,"neighbour","Delia retires from teaching. Her former pupils fill the schoolroom to say goodbye; some bring their grandchildren.", h=>!h.has("schoolsLost")||h.has("schoolsReopened")],
+  [41,"harrow","Odile Harrow dies. In her desk they find thirty years of receipts for slates, chalk and primers, all made out to Delia."],
+  [44,"neighbour","Yusuf dies in the shop he built. The valley closes its shutters for the morning.", h=>h.has("yusufCitizen")]
+];
+// National news: [condition, text]. One is picked for a year that has fewer than two events.
+const NEWS = [
+  [h=>h.m.pros>=62,"A good harvest. Grain is cheap and the autumn fairs run late into the night."],
+  [h=>h.m.pros>=62,"A new road reaches the valley. The carters complain that they now have no excuse."],
+  [h=>h.m.pros<40,"A thin year. The pawnshops in the capital do well."],
+  [h=>h.m.pros<40,"Prices rise faster than wages. Bread is weighed at the counter twice."],
+  [h=>h.m.eq<38,"A new mansion goes up on the ridge above the capital. It has forty windows facing the valley."],
+  [h=>h.m.eq<38,"Three more families in the district sell up and leave for the cities."],
+  [h=>h.m.eq>=62,"The land tax on small holdings is cut. The district celebrates with a dance nobody organised."],
+  [h=>h.m.inc<38,"A rule is passed that newcomers must register at the district office every quarter."],
+  [h=>h.m.inc>=62,"A newcomer's son is elected to the district council. Nobody remarks on it, which is remarked on."],
+  [h=>h.m.leg<38,"Turnout at the district election falls by half. The winner thanks the voters, all eleven hundred of them."],
+  [h=>h.m.leg>=62,"The Independence Day parade is the largest ever held. People bring their own flags."],
+  [h=>h.m.inst<38,"A judge is found to have sold three verdicts. Nothing happens to him."],
+  [h=>h.m.inst>=62,"The courts clear their backlog for the first time since the founding."],
+  [h=>h.m.coh<38,"A brawl at the provincial fair: valley men against town men, over nothing anyone can remember."],
+  [h=>h.m.coh>=62,"The valley raises a new bridge together in a week, without a single contract."],
+  [h=>h.has("publicEd")&&state.year<12,"The new public school opens in the valley. Children walk there from four miles away."],
+  [h=>h.has("privateEd"),"The church school raises its fees again."],
+  [h=>h.has("freeTrade")&&h.geo("coastal"),"Foreign ships crowd the harbour. The market sells things the valley has no names for."],
+  [h=>h.has("protectionism"),"Smuggling becomes the district's second trade, and the more profitable one."],
+  [h=>h.has("stateChurch"),"Attendance at the established church becomes a condition for district office."],
+  [h=>h.has("secular"),"The last church schoolroom in the valley becomes a public reading room."],
+  [h=>h.has("executive")&&!h.has("junta"),"The Chief Executive tours the provinces. The valley is told to paint its fences."],
+  [h=>h.has("federation")&&!h.has("centralized"),"The provinces quarrel over the river tolls again."],
+  [h=>h.has("coerced")&&!h.has("abolished"),"A bonded worker runs from the estates and is brought back in chains through the market square."],
+  [h=>h.has("abolished"),"The first freed families buy land in the valley, at prices nobody else would pay."],
+  [h=>h.has("unions"),"The union hall in the capital opens. Its first meeting runs until two in the morning."],
+  [h=>h.has("pressFree"),"A new newspaper starts in the capital every month, and most of them close by the next."],
+  [h=>h.has("sanitation"),"The capital's new sewers open. The summer smell is gone, and so is the fever."],
+  [h=>h.has("railwayRerouted")||h.has("railwaySeized"),"The first train runs up the valley. Half the district walks out to watch it pass."],
+  [h=>h.has("borderWar"),"The war memorial is unveiled in the market square. The list of names is longer than the stone."],
+  [h=>h.has("foreignPatron")&&!h.has("patronRefused"),"The foreign advisers move into a new building in the capital, with their own flag on the roof."],
+  [h=>h.geo("island"),"The storm season passes gently. The fishing boats stay out a week longer than usual."],
+  [h=>h.geo("arid"),"The great river runs a little higher than last year. Nobody trusts it."],
+  [h=>h.geo("landlocked"),"The neighbours raise their road tolls. The valley grumbles and pays."],
+  [()=>true,"A quiet year. The harvest is ordinary and the weather is discussed at length."],
+  [()=>true,"A long winter. The valley reads, quarrels and mends things."],
+  [()=>true,"An unremarkable year, which the valley agrees is the best kind."]
+];
+function seededRandom(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function almanacYears(from, to){
+  const h=H(), out=[];
+  // The first almanac to reach the parents' last decade fixes both death years, so the
+  // ending can never name a year the almanac skipped (an overdue death moves to `from`)
+  if(to>=40){ state.deathYear=state.deathYear||{}; for(const r of ["F","M"]) if(!state.deathYear[r]) state.deathYear[r]=Math.max(parentDeathYear(r), from); }
+  for(let y=from; y<=to; y++){
+    const items=[];
+    for(const [r,age,txt] of FAMILY_MILESTONES){
+      if(ageAt(r,y)!==age) continue;
+      if((r==="F"||r==="M")&&y>=parentDeathYear(r)) continue;
+      const t=typeof txt==="function"?txt(h):txt; if(t) items.push({kind:"family", r, text:t});
+    }
+    for(const r of ["F","M"]){
+      const dy=parentDeathYear(r), missed=y===from&&dy<from;   // a death in a year that had a card
+      if((y===dy||missed)&&!(state.deathShown&&state.deathShown[r])){
+        state.deathYear=state.deathYear||{}; state.deathYear[r]=dy; state.deathShown={...(state.deathShown||{}), [r]:true};
+        items.push({kind:"family", r, death:true, text:`{${r}} ${missed?`died in Year ${dy}`:"dies"}, at ${words(ageAt(r,dy))}. ${r==="F"?"The valley comes to the funeral in its working clothes, straight from the fields.":"Half the people at the funeral were delivered, fed or taught by her."}`});
+      }
+    }
+    for(const [yy,kind,text,cond] of VALLEY_EVENTS) if(yy===y&&(!cond||cond(h))) items.push({kind, text});
+    if(items.length<2){
+      // News that fits the nation now, each line once per game; the three quiet-year lines are the last resort
+      const used=new Set(state.newsUsed||[]), rnd=seededRandom((state.seed||1)+y*7919);
+      const fits=NEWS.map((n,i)=>i).filter(i=>NEWS[i][0](h)), quiet=i=>i>=NEWS.length-3;
+      const fresh=fits.filter(i=>!used.has(i)&&!quiet(i)), list=fresh.length?fresh:fits.filter(quiet);
+      const i=list[Math.floor(rnd()*list.length)];
+      if(!quiet(i)) state.newsUsed=[...(state.newsUsed||[]), i];
+      items.push({kind:"nation", text:NEWS[i][1]});
+    }
+    out.push({year:y, items});
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
 const rnd = a => a[Math.floor(Math.random()*a.length)];
@@ -969,7 +1100,8 @@ function addFlags(list){ (list||[]).forEach(f=>{ state.flags.add(f); if(!(f in s
 // ═══════════════════════════════════════════════════════════
 function newState(nation, family){
   return { nation, family, qi:0, answers:[], m:{}, flags:new Set(), flagYear:{}, year:1,
-           era:1, queue:[], ci:0, used:new Set(), log:[], snapshots:{}, pending:null, phase:"intro" };
+           era:1, queue:[], ci:0, used:new Set(), log:[], snapshots:{}, pending:null, phase:"intro",
+           seed:Math.floor(Math.random()*2**31), deathYear:{}, deathShown:{}, newsUsed:[] };
 }
 // Recompute the nation from all ten answers (so going back to change an answer is safe)
 function ratifyState(){
@@ -1051,7 +1183,7 @@ function vignette(r){
 function fate(r){
   const h=H(), f=state.family, sc=scores(), t=tier(sc[r],...TH[r]), m=state.m;
   if(r==="F"){
-    const dy = 40 + Math.max(0, Math.min(9, Math.round((m.pros+m.eq)/20) - (h.has("F_lostLand")?3:0)));
+    const dy = parentDeathYear("F");
     const da = ageAt("F", dy);
     const pre = `{F} {fam} died in Year ${dy}, at ${words(da)}. `;
     if(h.has("F_lostLand")) return pre+"His last years were spent in a rented room four streets from the warehouse where he worked. He kept a jar of soil from [[{Fhold}||the old field]] on the windowsill. No one threw it out for a long time afterwards.";
@@ -1062,7 +1194,7 @@ function fate(r){
       "[[{FholdCap} passed to his children free of debt.||He died a tenant, but with the rent paid a year ahead and money in the bank.]] At his funeral a man none of the family recognised stood up and said {F} had once helped him through a bad year and never asked to be repaid. {M} said that sounded like him."][t];
   }
   if(r==="M"){
-    const dy = 41 + Math.max(0, Math.min(8, Math.round((m.pros+m.eq)/20) - (h.has("motherFever")?4:0)));
+    const dy = parentDeathYear("M");
     const da = ageAt("M", dy);
     const pre = `{M} {fam} died in Year ${dy}, at ${words(da)}. `;
     if(h.has("universalVote")&&dy>state.flagYear.universalVote) return pre+`She voted in every election from Year ${state.flagYear.universalVote} until she died, and was never once late. She said she had waited long enough already.`;

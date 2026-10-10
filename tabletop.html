@@ -110,6 +110,14 @@ button{font:inherit;color:inherit;}
 .card .story{padding:8px 6px 4px;font-size:15px;line-height:1.6;}
 .card .story p+p{margin-top:.7em;}
 .card .note{margin:10px 6px 2px;padding:8px 10px;background:var(--card-2);border-radius:6px;font-size:13px;font-style:italic;color:var(--ink-2);line-height:1.5;}
+.card .inshort{margin:8px 6px 2px;padding:9px 12px;background:#fff4dc;border-left:4px solid var(--gold);border-radius:6px;font-family:var(--display);font-weight:600;font-size:15px;line-height:1.45;color:var(--ink);}
+.card .inshort b{display:block;font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#9a6c1c;margin-bottom:2px;}
+.card .grownups{margin:10px 6px 2px;font-size:13px;line-height:1.5;color:var(--ink-2);}
+.card .grownups summary{cursor:pointer;font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--plum);list-style:none;display:inline-flex;align-items:center;gap:6px;padding:4px 0;}
+.card .grownups summary::-webkit-details-marker{display:none;}
+.card .grownups summary::before{content:'▸';font-size:12px;transition:transform .2s;}
+.card .grownups[open] summary::before{transform:rotate(90deg);}
+.card .grownups p{margin:4px 0 0;padding:8px 10px;background:var(--card-2);border-radius:6px;border-left:4px solid var(--plum);}
 .card .note b{font-family:var(--display);font-style:normal;font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:2px;color:var(--ink);}
 .card .actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 6px 4px;flex-wrap:wrap;}
 .geo{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;padding:10px 6px 0;font-size:14px;}
@@ -500,6 +508,9 @@ document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey) return; if(keyHandler) keyHandler(e);
 });
 function primaryKeys(){ keyHandler=e=>{ if(e.key==='Enter'){ const b=document.querySelector('#center .primary'); if(b){ e.preventDefault(); b.click(); } } }; }
+// The plain-words summary and the grown-ups' note on a card (see engine.js).
+const shortBox = c => { const t=inShort(c); return t?`<div class="inshort"><b>In short</b>${T(t)}</div>`:''; };
+const grownupsBox = c => { const t=forGrownups(c); return t?`<details class="grownups"><summary>For grown-ups</summary><p>${T(t)}</p></details>`:''; };
 const paras = html => html.split(/<\/?p>/).map(s=>s.trim()).filter(Boolean).map(s=>`<p>${s}</p>`).join('');
 
 // ═══════════════════════════════════════════════════════════
@@ -530,7 +541,7 @@ function renderSetup(){
   center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--teal)"><span>Your nation</span><span>Year One</span></div><div class="art">${GEO_ART[N.icon]()}</div></div>
     <h1>${N.name}</h1><div class="story"><p><em>${N.desc}.</em> Independence has been won and the old order is gone. Who holds power, how people eat, how disputes are settled: all of it is now yours to decide.</p></div>
     <dl class="geo">${Object.entries(N.geo).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
-    <div class="note"><b>How to play</b>Ten founding cards, then fifty years of crises. Hover a card to see where the nation's cubes would move; click to choose, click again (or press Enter) to play. Your family will tell you what they think. Your game saves itself on this device after every move.${iosInstallHint()}</div>
+    <div class="note"><b>How to play</b>Ten founding cards, then fifty years of crises. Hover a card to see where the nation's cubes would move; click to choose, click again (or press Enter) to play. Your family will tell you what they think. Every card has an <b style="display:inline;font-size:inherit;letter-spacing:0;text-transform:none">In short</b> box in plain words, and cards about hard history have a note for grown-ups. Your game saves itself on this device after every move.${iosInstallHint()}</div>
     <div class="actions"><button class="primary" onclick="showQuestion(0)">Begin the founding →</button></div></div>`);
   ROLES.forEach((r,i)=>setTimeout(()=>say(r,state.family.members[ROLE_IDX[r]].desc,'say'),300+i*180));
   setTimeout(()=>harrowSay('silas',`“${T(harrowIntro())}”`),1250);
@@ -547,8 +558,8 @@ function showQuestion(qi){
   state.qi=qi; state.year=1; recomputeFounding(qi); updateBoard(); updateFaults(); setYear(1);
   const q=QUESTIONS[qi], col=CAT_COLORS[q.cat], tag=state.nation.tags.find(t=>q.geo&&q.geo[t]);
   center(`<div class="card deal" style="transform:rotate(-1deg)"><div class="frame"><div class="band" style="background:${col}"><span>Founding · ${q.cat}</span><span>${qi+1} of 10</span></div><div class="art">${Q_ART[q.cat]()}</div></div>
-    <h1 class="q">${q.title}</h1><div class="story"><p>${T(q.ctx)}</p></div>
-    ${tag?`<div class="note"><b>In ${state.nation.name}</b>${T(q.geo[tag])}</div>`:''}
+    <h1 class="q">${q.title}</h1>${shortBox({qi})}<div class="story"><p>${T(q.ctx)}</p></div>
+    ${tag?`<div class="note"><b>In ${state.nation.name}</b>${T(q.geo[tag])}</div>`:''}${grownupsBox({qi})}
     ${qi>0?`<div class="actions" style="justify-content:flex-start;padding-top:4px"><button class="link" onclick="undo()">↩ Re-do ${QUESTIONS[qi-1].cat}</button></div>`:''}
   </div>${hand(q.choices,col)}`);
   hush(); harrowHush(); say(q.witness.r,`“${T(q.witness.q)}”`,'say');
@@ -582,8 +593,8 @@ function nextCrisis(){
   setYear(cr.year); updateAges(); updateBoard(); hush(); harrowHush();
   sfx.draw();
   center(`<div class="card draw" style="transform:rotate(-1.2deg)"><div class="frame"><div class="band" style="background:${cr.payoff?'var(--gold);color:var(--ink)':'var(--red)'}"><span>${cr.payoff?'Consequence':'Crisis'} · ${cr.type}</span><span>Year ${cr.year}</span></div><div class="art">${(CRISIS_ART[cr.id]||ERA_ART.mid)()}</div></div>
-    <h1>${cr.title}</h1><div class="story">${paras(T(cr.story(h)))}</div>
-    <div class="note"${cr.payoff?' style="box-shadow:inset 4px 0 0 var(--gold)"':''}><b>${cr.payoff?'Set in motion':'Why this card was drawn'}</b>${T(cr.cause(h))}<br><span style="opacity:.75">${cr.insp}</span></div></div>${hand(cr.choices,cr.payoff?'var(--gold)':'var(--red)',.6)}`);
+    <h1>${cr.title}</h1>${shortBox(cr)}<div class="story">${paras(T(cr.story(h)))}</div>
+    <div class="note"${cr.payoff?' style="box-shadow:inset 4px 0 0 var(--gold)"':''}><b>${cr.payoff?'Set in motion':'Why this card was drawn'}</b>${T(cr.cause(h))}<br><span style="opacity:.75">${cr.insp}</span></div>${grownupsBox(cr)}</div>${hand(cr.choices,cr.payoff?'var(--gold)':'var(--red)',.6)}`);
   const v=cr.voice&&cr.voice(h); if(v) setTimeout(()=>say(v.r,`“${T(v.q)}”`,'say'),900);
   wireHand(cr.choices,{
     onSelect:()=>{ $('played-x').innerHTML=`<b>${state.nation.name} must choose</b>Click again or press Enter to play this card.`; },

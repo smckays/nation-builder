@@ -1246,3 +1246,81 @@ function verdict(){
   return {t:`${n}: unfinished`, p:`${n} is neither the nation its founders feared nor the one they hoped for. It is a place still arguing over what it promised, which is perhaps the best a nation can manage: an argument that never quite ends, conducted mostly in good faith.`};
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// FOR YOUNGER PLAYERS — an "In short" line for every card, in plain words, and
+// a note for grown-ups on the cards that touch hard history. Kept apart from the
+// story text so the writing above stays as it is.
+// ═══════════════════════════════════════════════════════════
+const IN_SHORT_Q = [
+  "Your new country needs someone in charge. Do the people vote, do the wisest founders decide, does one strong leader run things, or does each region mostly run itself?",
+  "Who gets the farms, forests and mines? People can own land themselves, share it, let the government own the most important parts, or just see what happens.",
+  "Every country has a big promise to its people. Will yours promise to protect what people own, protect what they can say and believe, promise both, or keep it short and decide later?",
+  "Who belongs to the country and gets a say? Only people born here, newcomers after a few years, only landowners, or everyone born here?",
+  "When people argue or break the rules, someone has to decide what's fair. Judges, a group of neighbours, judges the people vote for, or a rulebook followed exactly?",
+  "Somebody has to do the hard work. Do people choose their own jobs, join workers' groups, sign long contracts to pay off a debt, or are some people forced to work?",
+  "Should the government pick one religion, stay out of religion completely, let every faith be, or let churches run the schools and hospitals?",
+  "Other countries want to buy and sell with you. Do you let anything in, protect your own makers with taxes on outside goods, pick and choose, or let the government do all the trading?",
+  "How do children learn? Families and churches pay for school, everyone shares the cost of public schools, kids learn a job from a master, or a mix?",
+  "People in power can be tempted to help themselves. How will you stop that: do everything in public, split up the power, make leaders take turns, or just trust them?",
+];
+
+const IN_SHORT = {
+  plague: "A sickness came in on a ship and is spreading near the harbour. Closing the harbour stops it but costs the merchants money. What should the government do?",
+  road: "A neighbouring country blocked the main road and wants a big toll on your grain. Pay, fight, or ask a powerful friend for help?",
+  landgrab: "Men with rifles and a doubtful paper say a company owns the valley's farms, even fields families have worked for years. Who should the land belong to?",
+  school: "The teacher's school lost its money because an official moved it to a road through his own land. Should the country set up someone to watch officials, fire this one, or stay out of it?",
+  badyear: "A terrible year ruined the harvest and people are going hungry. Should the government hand out help, ask the rich landowners to share, or let prices sort it out?",
+  nativism: "Yusuf came from another country, works hard and pays his taxes, but the law gives him no way to become a citizen. After a bad harvest someone broke his shop window. What should the country do?",
+  petition: "Some people are stuck working off contracts they were born into, passed down from their parents. They're asking that no child inherit a parent's contract. Listen, say no, or put it off?",
+  tariff: "The coast and the inland regions are taxing each other's goods, and it's hurting everyone. Make a deal, let each region do its own thing, or have the central government take charge?",
+  flood: "A flood washed away the houses of families who rent their farms, and the owner won't rebuild. Should the government buy the land for them, help them move to the city, or try to talk it out?",
+  veterans: "Soldiers were promised land for fighting for independence, but the land went to a company instead. Give them the land, give them money, or make them go through a slow appeals process?",
+  strike: "The owners cut workers' pay, so the workers stopped working (a strike). Should workers be allowed to join together, should the strike be broken up, or should someone fair decide?",
+  succession: "The last founder died, and his son wants his seat even though nobody voted for him. Hold an election, let the son have it, or let the army keep order?",
+  march: "Thousands of people who aren't allowed to vote are walking to the capital to ask for it. Let everyone vote, let only taxpayers vote, or send them home?",
+  rising: "People forced to work on the big estates have walked off together, and some carry weapons. They want to be free, as the founding document promised. Free them now, stop them by force, or free them slowly?",
+  printer: "A printer published that an official is selling government jobs, and he was arrested for it. Should a court decide whether it's true, should the government decide, or should he be let go quietly?",
+  titlesuits: "A company found very old papers saying it owns the farms that families have worked for years. Whose claim should win: the oldest paper, nobody's from before the country began, or whoever has worked the land longest?",
+  compensation: "When forced labour ended, the old owners asked to be paid for losing their workers. The freed people got nothing. Who, if anyone, should get help?",
+  compensation2: "When forced labour ended, the old owners asked to be paid for losing their workers. The freed people got nothing. Who, if anyone, should get help?",
+  feversummer: "A sickness keeps coming back, mostly where poor people live, because their wells are dirty. Build clean water for everyone, keep the poor areas closed off, or leave it to churches and doctors?",
+  seconddry: "It's a dry year again. Not as bad as last time, but people want the same help. Help again, make rules about when help comes, or say no?",
+  readingtest: "Some people want voters to pass a reading test. But many grown-ups can't read because their schools were closed years ago. Add the test, reopen the schools, or do neither?",
+  workshops: "The country needs skilled workers now, years after it told people from other countries to stay away. Invite workers from abroad, train your own, or ask Yusuf to come back?",
+  patron: "The powerful country that helped you before now wants soldiers stationed here and a say in your trade. Say yes, say no and pay off what you owe, or agree for a set time?",
+  inspector: "The people who watch the government found a hero minister cheating, right before an election. Tell everyone now, wait until after the vote, or let his own side take over the watchers?",
+  secession: "The biggest region wants to vote on leaving the country. Let them vote, offer them more say if they stay, or send the army?",
+  occupation: "Old soldiers still waiting for their promised land have taken over the land office, peacefully. Give them the land, arrest them, or forgive them and promise a fair deadline?",
+  generalstrike: "Workers in every trade in the capital have stopped working at once, asking for the right to join together. Allow it, bring in the army, or write new rules with the owners?",
+  railway: "A railway is coming, and it goes right through people's homes and farms. Pay them a fair price, go around them, or pay the lower price the government sets?",
+  secondwalk: "Women are marching for the vote, many of them the daughters of the first marchers. Let every adult vote, only women who own property, or say no?",
+  heirsheir: "The founder's grandson, just nineteen, wants the top job because his father and grandfather had it. Let the assembly choose, give him the job, or have a council run things until he's older?",
+};
+
+// Notes for a parent reading along: what the card is about, and something to talk about.
+const FOR_GROWNUPS = {
+  Q3: "About who is left out of citizenship. Real countries have excluded people by birth, property, race and sex. Ask: who would be left out under each choice?",
+  Q5: "One choice is coerced labour, meaning slavery or forced work. If it's chosen, it shapes the whole game, including a later uprising. Worth deciding together, and talking about why it was ever allowed.",
+  plague: "About an epidemic: people get sick and some die, and the poor are hit hardest. Ask: why did the message about the sickness sit on a desk for nine days?",
+  road: "One choice is war. The story doesn't dwell on fighting, but soldiers and the family's son are involved.",
+  landgrab: "Armed men take land from families. Ask: what makes a piece of paper count more than a family who worked the land?",
+  nativism: "About prejudice against an immigrant family, including a broken shop window. Ask: why does blaming newcomers feel simple when times are hard?",
+  petition: "About people bound to work by contracts they inherited from their parents, a form of unfree labour. Ask: should a child ever have to pay a parent's debt?",
+  flood: "Families lose their homes after a flood, and the landowner won't let them come back.",
+  strike: "Strikes in history sometimes turned violent. Some choices here bring in guards or soldiers.",
+  succession: "One choice hands power to the army. Ask: why might that be hard to undo?",
+  march: "One choice is to break up a peaceful march by force.",
+  rising: "About enslaved and bonded workers rising up, some armed. Choices include crushing the rising by force. Worth reading together. Ask: what did the founding document promise, and to whom?",
+  compensation: "About whether slave owners should be paid when slavery ends (this really happened in some countries) while freed people got nothing. Ask: who was really owed something?",
+  compensation2: "About whether slave owners should be paid when slavery ends (this really happened in some countries) while freed people got nothing. Ask: who was really owed something?",
+  feversummer: "An epidemic in the capital. One choice is to close off the poor districts and keep people in.",
+  readingtest: "Reading tests were really used to stop certain people from voting. Ask: who closed the schools, and who would this test keep out?",
+  occupation: "Some choices end with arrests at a peaceful protest.",
+  generalstrike: "One choice is martial law: the army running the city.",
+  secession: "One choice sends the army against a region of the country, which can mean civil war.",
+  secondwalk: "About women winning the vote. Ask: why did it take a second march?",
+};
+
+const inShort = card => card && (card.qi != null ? IN_SHORT_Q[card.qi] : IN_SHORT[card.id]) || null;
+const forGrownups = card => card && (card.qi != null ? FOR_GROWNUPS['Q' + card.qi] : FOR_GROWNUPS[card.id]) || null;

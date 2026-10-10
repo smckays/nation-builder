@@ -89,6 +89,9 @@ button{font:inherit;color:inherit;}
 .bubble.impact::before{border-bottom-color:var(--gold);}
 .bubble.fate{font-size:13px;}
 .meeple.lit{background:rgba(224,166,58,.28);}
+.meeple .row{position:relative;}   /* the dot sits on the row: the bubble positions against the bar */
+.meeple.has-say .row::after{content:'💬';position:absolute;top:-10px;left:10px;font-size:15px;line-height:1;animation:nudge 1.6s ease-in-out infinite;}
+@keyframes nudge{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(-3px)}}
 .harrows{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
 .hp{background:rgba(0,0,0,.14);border-radius:10px;padding:6px 4px;text-align:center;color:#cfe3d6;font-family:var(--display);font-size:11px;transition:background .3s;}
 .hp svg{width:22px;height:26px;display:block;margin:0 auto 2px;}
@@ -399,7 +402,7 @@ function buildFamily(){
     return `<div class="meeple" id="m-${r}"><div class="row"><span id="ic-${r}">${MEEPLE(COLORS[r])}</span><div><b id="nm-${r}"></b><span class="role" id="ro-${r}"></span></div></div><div class="bubble" id="b-${r}"></div></div>`; }).join('');
   buildHarrows(); updateAges();
   ROLES.forEach(r=>{
-    $('m-'+r).onclick=()=>{ if(narrow()&&lastSaid[r]) say(r,...lastSaid[r]); };
+    $('m-'+r).onclick=()=>{ if(narrow()&&lastSaid[r]) say(r,...lastSaid[r],true); };
     $('b-'+r).onclick=e=>{ if(narrow()){ e.stopPropagation(); $('b-'+r).className='bubble'; } };
   });
 }
@@ -421,8 +424,16 @@ function harrowHush(){ $('hb').className='bubble'; HARROWS.forEach(p=>$('hp-'+p.
 const neighNote=(title,lines)=>lines.length?`<div class="note neigh"><b>${title}</b>${lines.map(l=>`<p>${l}</p>`).join('')}</div>`:'';
 const narrow=()=>matchMedia('(max-width:1020px)').matches;
 const lastSaid={};
-function say(r,text,kind='say'){ if(!r) return; lastSaid[r]=[text,kind]; if(narrow()&&kind!=='fate') hush(r); const b=$('b-'+r); b.className='bubble '+kind; b.innerHTML=text; sfx.pop(); void b.offsetWidth; b.classList.add('show'); $('m-'+r).classList.toggle('lit',kind==='impact'); }
-function hush(except){ ROLES.forEach(r=>{ if(r!==except){ $('b-'+r).className='bubble'; $('m-'+r).classList.remove('lit'); } }); }
+// On wide screens a quote shows beside the speaker. On narrow ones it would float
+// over the page (and its buttons), so it waits: the speaker gets a speech dot,
+// and tapping them shows it (`tapped`).
+function say(r,text,kind='say',tapped=false){ if(!r) return; lastSaid[r]=[text,kind];
+  if(narrow()&&kind!=='fate'&&!tapped){ $('m-'+r).classList.add('has-say'); return; }
+  // one bubble at a time on a narrow screen; the others keep their speech dots
+  if(narrow()&&kind!=='fate') ROLES.forEach(x=>{ if(x!==r){ $('b-'+x).className='bubble'; $('m-'+x).classList.remove('lit'); } });
+  $('m-'+r).classList.remove('has-say');
+  const b=$('b-'+r); b.className='bubble '+kind; b.innerHTML=text; sfx.pop(); void b.offsetWidth; b.classList.add('show'); $('m-'+r).classList.toggle('lit',kind==='impact'); }
+function hush(except){ ROLES.forEach(r=>{ if(r!==except){ $('b-'+r).className='bubble'; $('m-'+r).classList.remove('lit','has-say'); } }); }
 // On phones a bubble floats over the cards: a tap puts it away.
 document.addEventListener('click', e => { const b = e.target.closest('.bubble.show'); if (b && narrow()) { b.classList.remove('show'); ROLES.forEach(r => $('m-'+r).classList.remove('lit')); } });
 const speakerFor = raw => { const m=raw.match(/\{([FMSD])\}/); return m?m[1]:null; };

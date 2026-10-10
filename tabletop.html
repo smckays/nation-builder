@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f5a46">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nation Builder">
 <title>Nation Builder</title>
 <meta name="description" content="Found a nation, then live with it. Ten founding choices, fifty years of crises, and one family who lives inside every decision.">
 <meta property="og:title" content="Nation Builder">
@@ -17,7 +25,7 @@ body{min-height:100vh;color:var(--ink);font-family:var(--body);background:radial
 body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");}
 button{font:inherit;color:inherit;}
 
-#top{max-width:1240px;margin:0 auto;padding:14px 20px 0;display:flex;justify-content:space-between;align-items:center;color:#cfe3d6;font-family:var(--display);}
+#top{max-width:1240px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));display:flex;justify-content:space-between;align-items:center;color:#cfe3d6;font-family:var(--display);}
 #top .t{font-weight:800;font-size:15px;letter-spacing:.02em;}
 #top .t span{font-weight:400;opacity:.75;margin-left:8px;}
 #top .studio{display:block;font-weight:600;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#cfe3d6;opacity:.6;text-decoration:none;margin-bottom:2px;}
@@ -25,6 +33,8 @@ button{font:inherit;color:inherit;}
 #top .studio:hover,#top .studio:focus-visible{opacity:1;}
 .ghost-btn{background:none;border:1.5px solid rgba(207,227,214,.4);color:#cfe3d6;border-radius:999px;padding:5px 12px;font-family:var(--display);font-weight:600;font-size:12px;cursor:pointer;}
 .ghost-btn:hover{border-color:#cfe3d6;}
+#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translate(-50%,-20px);background:var(--card);color:var(--ink);font-family:var(--display);font-weight:600;font-size:13px;padding:9px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:50;max-width:calc(100vw - 32px);text-align:center;}
+#toast.show{opacity:1;transform:translate(-50%,0);}
 .ghost-btn:disabled{opacity:.35;cursor:default;border-color:rgba(207,227,214,.4);}
 
 .table{max-width:1240px;margin:0 auto;padding:16px 20px 60px;display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:28px;align-items:start;}
@@ -182,7 +192,8 @@ button{font:inherit;color:inherit;}
 </style>
 </head>
 <body>
-<div id="top"><div class="t"><a class="studio" href="https://fun-time-studio.netlify.app/">Fun Time Studio</a>Nation Builder<span id="top-sub"></span></div><div><button class="ghost-btn" id="undo-btn" onclick="undo()" title="Take back your last decision (Ctrl+Z)" disabled>↩ Undo</button> <button class="ghost-btn" id="snd">♪ On</button> <button class="ghost-btn" onclick="newGame()">New game</button></div></div>
+<div id="top"><div class="t"><a class="studio" href="https://fun-time-studio.netlify.app/">Fun Time Studio</a>Nation Builder<span id="top-sub"></span></div><div><button class="ghost-btn" id="install-btn" hidden>⤓ Install</button> <button class="ghost-btn" id="undo-btn" onclick="undo()" title="Take back your last decision (Ctrl+Z)" disabled>↩ Undo</button> <button class="ghost-btn" id="snd">♪ On</button> <button class="ghost-btn" onclick="newGame()">New game</button></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <div class="table">
   <aside class="side side-l">
     <div class="label" id="board-label">State of the Nation</div>
@@ -456,12 +467,12 @@ let keyHandler=null;
 let history=[];
 const copyState = st => ({...st, m:{...st.m}, flags:new Set(st.flags), flagYear:{...st.flagYear}, used:new Set(st.used),
   log:[...st.log], queue:[...(st.queue||[])], snapshots:{...st.snapshots}, answers:[...st.answers]});
-function remember(show){ history.push({snap:copyState(state), show}); $('undo-btn').disabled=false; }
+function remember(screen){ history.push({snap:copyState(state), screen}); $('undo-btn').disabled=false; }
 function undo(){
   if(!history.length) return;
   const h=history.pop(); state=copyState(h.snap); $('undo-btn').disabled=!history.length;
   knownFaults=activeFaults(); updateFaults(); updateAges(); updateBoard(); setYear(state.year); hush(); harrowHush();
-  h.show(); sfx.select();
+  showScreen(h.screen); sfx.select();
 }
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
@@ -473,22 +484,28 @@ const paras = html => html.split(/<\/?p>/).map(s=>s.trim()).filter(Boolean).map(
 // ═══════════════════════════════════════════════════════════
 // GAME FLOW
 // ═══════════════════════════════════════════════════════════
-function newGame(){
-  state=newState(rnd(NATIONS), rnd(FAMILIES)); state.queue=[]; knownFaults=[]; shown={}; history=[]; $('undo-btn').disabled=true;
-  state.m={...state.nation.base};
+function setupTable(){
   $('top-sub').textContent=`${state.nation.name} · the ${state.family.surname} family`;
   $('board-label').textContent=`${state.nation.name} · State of the Nation`;
   $('fam-label').textContent=`The ${state.family.surname} Family`;
-  buildBoard(); buildFamily(); updateBoard(); setYear(1); $('faults').innerHTML='';
+  buildBoard(); buildFamily();
+}
+function newGame(){
+  state=newState(rnd(NATIONS), rnd(FAMILIES)); state.queue=[]; knownFaults=[]; shown={}; history=[]; $('undo-btn').disabled=true;
+  state.m={...state.nation.base};
+  setupTable(); updateBoard(); setYear(1); $('faults').innerHTML='';
+  renderSetup();
+}
+function renderSetup(){
   const N=state.nation;
   center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--teal)"><span>Your nation</span><span>Year One</span></div><div class="art">${GEO_ART[N.icon]()}</div></div>
     <h1>${N.name}</h1><div class="story"><p><em>${N.desc}.</em> Independence has been won and the old order is gone. Who holds power, how people eat, how disputes are settled: all of it is now yours to decide.</p></div>
     <dl class="geo">${Object.entries(N.geo).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
-    <div class="note"><b>How to play</b>Ten founding cards, then fifty years of crises. Hover a card to see where the nation's cubes would move; click to choose, click again (or press Enter) to play. Your family will tell you what they think.</div>
+    <div class="note"><b>How to play</b>Ten founding cards, then fifty years of crises. Hover a card to see where the nation's cubes would move; click to choose, click again (or press Enter) to play. Your family will tell you what they think. Your game saves itself on this device after every move.${iosInstallHint()}</div>
     <div class="actions"><button class="primary" onclick="showQuestion(0)">Begin the founding →</button></div></div>`);
   ROLES.forEach((r,i)=>setTimeout(()=>say(r,state.family.members[ROLE_IDX[r]].desc,'say'),300+i*180));
   setTimeout(()=>harrowSay('silas',`“${T(harrowIntro())}”`),1250);
-  primaryKeys();
+  primaryKeys(); save({k:'setup'});
 }
 
 // live founding state: everything played so far
@@ -507,8 +524,9 @@ function showQuestion(qi){
   hush(); harrowHush(); say(q.witness.r,`“${T(q.witness.q)}”`,'say');
   wireHand(q.choices,{
     onSelect:i=>{ const c=q.choices[i], sp=speakerFor(c.fi)||q.witness.r; hush(sp); say(sp,T(c.fi),'impact'); $('played-x').innerHTML=`<b>Sets in motion</b>${T(c.x)}`; },
-    onPlay:i=>{ remember(()=>showQuestion(qi)); state.answers[qi]=i; recomputeFounding(qi+1); updateBoard(); updateFaults(); if(qi<9) showQuestion(qi+1); else ratify(); }
+    onPlay:i=>{ remember({k:'question',qi}); state.answers[qi]=i; recomputeFounding(qi+1); updateBoard(); updateFaults(); if(qi<9) showQuestion(qi+1); else ratify(); }
   });
+  save({k:'question',qi});
 }
 
 function ratify(){
@@ -517,7 +535,7 @@ function ratify(){
     <h1>What you have made</h1><div class="story"><p>${foundingSentence()}</p></div>
     <div class="note"><b>On the board</b>The cubes show where ${state.nation.name} begins. The red cards at left are the fault lines in its founding; crises will find them.</div>
     <div class="actions"><button class="primary" onclick="startEra(2)">Draw the first crisis →</button></div></div>`);
-  primaryKeys();
+  primaryKeys(); save({k:'ratify'});
 }
 
 function startEra(era){ state.era=era; state.queue=pickCrises(era); state.ci=0; setYear(state.year); nextCrisis(); }
@@ -533,8 +551,15 @@ function nextCrisis(){
   wireHand(cr.choices,{
     onSelect:()=>{ $('played-x').innerHTML=`<b>${state.nation.name} must choose</b>Click again or press Enter to play this card.`; },
     onPlay:i=>{
-      const ci=state.ci; remember(()=>{ state.ci=ci; nextCrisis(); });
-      const c=applyCrisisChoice(cr,i); updateBoard(); updateFaults();
+      remember({k:'crisis',ci:state.ci});
+      applyCrisisChoice(cr,i); showResult(cr,i);
+    }
+  });
+  save({k:'crisis',ci:state.ci});
+}
+// The result card for a played crisis choice (effects already applied)
+function showResult(cr,i){
+      const c=cr.choices[i]; updateBoard(); updateFaults();
       const sp=speakerFor(c.fam); hush(sp); if(sp) say(sp,T(c.fam),'impact');
       const hr=harrowReaction(cr,i); if(hr) setTimeout(()=>harrowSay(hr.k,`“${T(hr.q)}”`),650);
       center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--ink)"><span>${cr.title} · what happened</span><span>Year ${cr.year}</span></div></div>
@@ -542,9 +567,7 @@ function nextCrisis(){
         ${sp?'':`<div class="note"><b>The ${state.family.surname} family</b>${T(c.fam)}</div>`}
         ${hr?`<div class="note inline-only"><b>${harrowAt(hr.k,cr.year).name} Harrow</b>“${T(hr.q)}”</div>`:''}
         <div class="actions"><button class="link" onclick="undo()">↩ Re-do this decision</button><button class="primary" onclick="state.ci++;nextCrisis()">${state.ci===state.queue.length-1?(state.era===2?'Twenty-five years on →':'Toward Year 50 →'):'Draw the next card →'}</button></div></div>`);
-      primaryKeys();
-    }
-  });
+      primaryKeys(); save({k:'result',ci:state.ci,i});
 }
 
 function midpoint(){
@@ -555,7 +578,7 @@ function midpoint(){
     <div class="actions"><button class="primary" onclick="startEra(3)">The second generation →</button></div></div>`);
   ROLES.forEach((r,i)=>setTimeout(()=>say(r,T(vignette(r)),'say'),250+i*200));
   setTimeout(()=>harrowSay('lucan',`“${harrowNow25()}”`),1100);
-  primaryKeys();
+  primaryKeys(); save({k:'mid'});
 }
 
 function epilogue(){
@@ -569,10 +592,62 @@ function epilogue(){
       ? `<div class="record">${state.log.map(e=>`<div class="r"><div class="k">${e.k}</div><div>${e.t?`<small>${e.t}</small>`:''}${e.v}</div></div>`).join('')}</div>`
       : `<div class="verdict">${v.p}</div><div class="note"><b>The family</b>Their stories are beside their names. The line on each track marks Year One.</div>${famInline(r=>T(fate(r)))}<div class="inline-only">${neighNote('The Harrows',[`${harrowAt(hf.k,50).name}: “${T(hf.q)}”`])}</div>${neighNote('What became of the neighbours',neighboursMet().map(n=>T(n.fate(H()))))}`}
     <div class="actions"><button class="link" onclick="(${tab==='record'?'epShow()':"epShow('record')"})">${tab==='record'?'← Back to the ending':'Read the record'}</button><button class="primary" onclick="newGame()">Build another nation →</button></div></div>`);
-  window.epShow=show; show(); primaryKeys();
+  window.epShow=show; show(); primaryKeys(); save({k:'end'});
 }
 
-newGame();
+// ═══════════════════════════════════════════════════════════
+// AUTO-SAVE — the whole game (and its undo history) is saved on this
+// device after every screen, and reopening the app resumes it.
+// ═══════════════════════════════════════════════════════════
+const SAVE_KEY='nation-builder:tabletop:v1';
+const pack = st => ({nation:st.nation.name, family:st.family.surname, qi:st.qi, answers:st.answers, m:st.m, flags:[...st.flags], flagYear:st.flagYear,
+  used:[...st.used], log:st.log, queue:(st.queue||[]).map(c=>c.id), ci:st.ci, era:st.era, year:st.year, snapshots:st.snapshots});
+function unpack(o){
+  const nation=NATIONS.find(n=>n.name===o.nation), family=FAMILIES.find(f=>f.surname===o.family);
+  if(!nation||!family) throw new Error('unknown nation or family');
+  const queue=o.queue.map(id=>CRISES.find(c=>c.id===id)); if(queue.some(c=>!c)) throw new Error('unknown crisis');
+  return {...newState(nation,family), ...o, nation, family, flags:new Set(o.flags), used:new Set(o.used), queue};
+}
+function save(screen){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({v:1, savedAt:Date.now(), screen, state:pack(state), history:history.map(h=>({snap:pack(h.snap), screen:h.screen}))})); }catch(e){}
+}
+function showScreen(d){
+  switch(d.k){
+    case 'setup': return renderSetup();
+    case 'question': return showQuestion(d.qi);
+    case 'ratify': return ratify();
+    case 'crisis': state.ci=d.ci; return nextCrisis();
+    case 'result': state.ci=d.ci; return showResult(state.queue[d.ci], d.i);
+    case 'mid': return midpoint();
+    case 'end': return epilogue();
+  }
+}
+function resumeSaved(){
+  let o; try{ o=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){ return false; }
+  if(!o||o.v!==1) return false;
+  try{
+    state=unpack(o.state); history=(o.history||[]).map(h=>({snap:unpack(h.snap), screen:h.screen}));
+    shown={}; knownFaults=activeFaults(); setupTable(); updateAges(); updateBoard(); updateFaults(); setYear(state.year);
+    $('undo-btn').disabled=!history.length;
+    showScreen(o.screen); toast('Welcome back. Your game was right where you left it.');
+    return true;
+  }catch(e){ console.warn('Saved game could not be restored', e); return false; }
+}
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),3200); }
+
+// ── install as an app ──
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+function iosInstallHint(){ return isIOS&&!standalone() ? ' To install it as an app, tap Share, then Add to Home Screen.' : ''; }
+let installPrompt=null;
+addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); installPrompt=e; $('install-btn').hidden=false; });
+addEventListener('appinstalled', ()=>{ installPrompt=null; $('install-btn').hidden=true; toast('Installed. Nation Builder is on your home screen.'); });
+$('install-btn').onclick=async()=>{ if(!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt=null; $('install-btn').hidden=true; };
+
+// ── offline: the service worker keeps a copy of the game on the device ──
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+if(!resumeSaved()) newGame();
 </script>
 </body>
 </html>

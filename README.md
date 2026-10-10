@@ -28,4 +28,11 @@ All family text uses role tokens (`{F}` `{M}` `{S}` `{D}`, `{fam}`, `[[landed||l
 
 Every push to `main` deploys the tabletop version to https://nation-builders.netlify.app. Netlify is linked to this repo and reads its build settings from `netlify.toml`. GitHub holds the code only; nothing is published there.
 
-The site contains two files: `tabletop.html` (served as `index.html`) and `engine.js`. The other versions stay in the repo but are not published.
+The site is the tabletop version as an installable app: `tabletop.html` (served as `index.html`), `engine.js`, `manifest.webmanifest`, the service worker `sw.js` and `icons/`. The other versions stay in the repo but are not published.
+
+## The app
+
+- **Install:** in Chrome or Edge, use the Install button in the game's top bar (or the install icon in the address bar). On iPhone or iPad, open the site in Safari, tap Share, then **Add to Home Screen**. It opens full screen with its own icon.
+- **Offline:** the service worker keeps a copy of the game on the device, so it opens without a connection. Each deploy stamps the cache with the commit (`__BUILD__` in `sw.js`), so updates arrive the next time the app opens online.
+- **Auto-save:** the game and its undo history are saved in the browser's local storage on each device after every move, and reopening resumes the game. Saves stay on that device; they do not sync between devices.
+- **Icons** are drawn in code; regenerate them with the Pillow script if the design changes.

@@ -20,8 +20,12 @@ button{font:inherit;color:inherit;}
 #top{max-width:1240px;margin:0 auto;padding:14px 20px 0;display:flex;justify-content:space-between;align-items:center;color:#cfe3d6;font-family:var(--display);}
 #top .t{font-weight:800;font-size:15px;letter-spacing:.02em;}
 #top .t span{font-weight:400;opacity:.75;margin-left:8px;}
+#top .studio{display:block;font-weight:600;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#cfe3d6;opacity:.6;text-decoration:none;margin-bottom:2px;}
+#top .studio::before{content:"\2190  ";}
+#top .studio:hover,#top .studio:focus-visible{opacity:1;}
 .ghost-btn{background:none;border:1.5px solid rgba(207,227,214,.4);color:#cfe3d6;border-radius:999px;padding:5px 12px;font-family:var(--display);font-weight:600;font-size:12px;cursor:pointer;}
 .ghost-btn:hover{border-color:#cfe3d6;}
+.ghost-btn:disabled{opacity:.35;cursor:default;border-color:rgba(207,227,214,.4);}
 
 .table{max-width:1240px;margin:0 auto;padding:16px 20px 60px;display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:28px;align-items:start;}
 .side{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;scrollbar-width:thin;padding-bottom:8px;}
@@ -178,7 +182,7 @@ button{font:inherit;color:inherit;}
 </style>
 </head>
 <body>
-<div id="top"><div class="t">Nation Builder<span id="top-sub"></span></div><div><button class="ghost-btn" id="snd">♪ On</button> <button class="ghost-btn" onclick="newGame()">New game</button></div></div>
+<div id="top"><div class="t"><a class="studio" href="https://fun-time-studio.netlify.app/">Fun Time Studio</a>Nation Builder<span id="top-sub"></span></div><div><button class="ghost-btn" id="undo-btn" onclick="undo()" title="Take back your last decision (Ctrl+Z)" disabled>↩ Undo</button> <button class="ghost-btn" id="snd">♪ On</button> <button class="ghost-btn" onclick="newGame()">New game</button></div></div>
 <div class="table">
   <aside class="side side-l">
     <div class="label" id="board-label">State of the Nation</div>
@@ -448,7 +452,21 @@ function wireHand(choices,{onSelect,onPlay}){
 }
 function center(html){ $('center').innerHTML=html; window.scrollTo({top:0,behavior:'smooth'}); }
 let keyHandler=null;
-document.addEventListener('keydown',e=>{ if(e.metaKey||e.ctrlKey||e.altKey) return; if(keyHandler) keyHandler(e); });
+// ── Undo: every decision saves the game as it stood, plus how to show that card again ──
+let history=[];
+const copyState = st => ({...st, m:{...st.m}, flags:new Set(st.flags), flagYear:{...st.flagYear}, used:new Set(st.used),
+  log:[...st.log], queue:[...(st.queue||[])], snapshots:{...st.snapshots}, answers:[...st.answers]});
+function remember(show){ history.push({snap:copyState(state), show}); $('undo-btn').disabled=false; }
+function undo(){
+  if(!history.length) return;
+  const h=history.pop(); state=copyState(h.snap); $('undo-btn').disabled=!history.length;
+  knownFaults=activeFaults(); updateFaults(); updateAges(); updateBoard(); setYear(state.year); hush(); harrowHush();
+  h.show(); sfx.select();
+}
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
+  if(e.metaKey||e.ctrlKey||e.altKey) return; if(keyHandler) keyHandler(e);
+});
 function primaryKeys(){ keyHandler=e=>{ if(e.key==='Enter'){ const b=document.querySelector('#center .primary'); if(b){ e.preventDefault(); b.click(); } } }; }
 const paras = html => html.split(/<\/?p>/).map(s=>s.trim()).filter(Boolean).map(s=>`<p>${s}</p>`).join('');
 
@@ -456,7 +474,7 @@ const paras = html => html.split(/<\/?p>/).map(s=>s.trim()).filter(Boolean).map(
 // GAME FLOW
 // ═══════════════════════════════════════════════════════════
 function newGame(){
-  state=newState(rnd(NATIONS), rnd(FAMILIES)); state.queue=[]; knownFaults=[]; shown={};
+  state=newState(rnd(NATIONS), rnd(FAMILIES)); state.queue=[]; knownFaults=[]; shown={}; history=[]; $('undo-btn').disabled=true;
   state.m={...state.nation.base};
   $('top-sub').textContent=`${state.nation.name} · the ${state.family.surname} family`;
   $('board-label').textContent=`${state.nation.name} · State of the Nation`;
@@ -484,12 +502,12 @@ function showQuestion(qi){
   center(`<div class="card deal" style="transform:rotate(-1deg)"><div class="frame"><div class="band" style="background:${col}"><span>Founding · ${q.cat}</span><span>${qi+1} of 10</span></div><div class="art">${Q_ART[q.cat]()}</div></div>
     <h1 class="q">${q.title}</h1><div class="story"><p>${T(q.ctx)}</p></div>
     ${tag?`<div class="note"><b>In ${state.nation.name}</b>${T(q.geo[tag])}</div>`:''}
-    ${qi>0?`<div class="actions" style="justify-content:flex-start;padding-top:4px"><button class="link" onclick="showQuestion(${qi-1})">← Back to ${QUESTIONS[qi-1].cat}</button></div>`:''}
+    ${qi>0?`<div class="actions" style="justify-content:flex-start;padding-top:4px"><button class="link" onclick="undo()">↩ Re-do ${QUESTIONS[qi-1].cat}</button></div>`:''}
   </div>${hand(q.choices,col)}`);
   hush(); harrowHush(); say(q.witness.r,`“${T(q.witness.q)}”`,'say');
   wireHand(q.choices,{
     onSelect:i=>{ const c=q.choices[i], sp=speakerFor(c.fi)||q.witness.r; hush(sp); say(sp,T(c.fi),'impact'); $('played-x').innerHTML=`<b>Sets in motion</b>${T(c.x)}`; },
-    onPlay:i=>{ state.answers[qi]=i; recomputeFounding(qi+1); updateBoard(); updateFaults(); if(qi<9) showQuestion(qi+1); else ratify(); }
+    onPlay:i=>{ remember(()=>showQuestion(qi)); state.answers[qi]=i; recomputeFounding(qi+1); updateBoard(); updateFaults(); if(qi<9) showQuestion(qi+1); else ratify(); }
   });
 }
 
@@ -515,6 +533,7 @@ function nextCrisis(){
   wireHand(cr.choices,{
     onSelect:()=>{ $('played-x').innerHTML=`<b>${state.nation.name} must choose</b>Click again or press Enter to play this card.`; },
     onPlay:i=>{
+      const ci=state.ci; remember(()=>{ state.ci=ci; nextCrisis(); });
       const c=applyCrisisChoice(cr,i); updateBoard(); updateFaults();
       const sp=speakerFor(c.fam); hush(sp); if(sp) say(sp,T(c.fam),'impact');
       const hr=harrowReaction(cr,i); if(hr) setTimeout(()=>harrowSay(hr.k,`“${T(hr.q)}”`),650);
@@ -522,7 +541,7 @@ function nextCrisis(){
         <h1 class="q">${T(c.l)}</h1><div class="story"><p>${T(c.after)}</p></div>
         ${sp?'':`<div class="note"><b>The ${state.family.surname} family</b>${T(c.fam)}</div>`}
         ${hr?`<div class="note inline-only"><b>${harrowAt(hr.k,cr.year).name} Harrow</b>“${T(hr.q)}”</div>`:''}
-        <div class="actions"><button class="primary" onclick="state.ci++;nextCrisis()">${state.ci===state.queue.length-1?(state.era===2?'Twenty-five years on →':'Toward Year 50 →'):'Draw the next card →'}</button></div></div>`);
+        <div class="actions"><button class="link" onclick="undo()">↩ Re-do this decision</button><button class="primary" onclick="state.ci++;nextCrisis()">${state.ci===state.queue.length-1?(state.era===2?'Twenty-five years on →':'Toward Year 50 →'):'Draw the next card →'}</button></div></div>`);
       primaryKeys();
     }
   });

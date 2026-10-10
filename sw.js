@@ -1,7 +1,7 @@
 // Nation Builder service worker: keeps the game on the device so it opens offline.
 // The build replaces __BUILD__ with the commit, so each deploy gets a fresh cache.
 const CACHE = 'nation-builder-__BUILD__';
-const APP = ['./', './index.html', './engine.js', './handoff.js', './manifest.webmanifest',
+const APP = ['./', './index.html', './engine.js', './handoff.js', './fts-profile.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 

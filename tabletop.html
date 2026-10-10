@@ -11,10 +11,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Nation Builder">
-<title>Nation Builder</title>
+<meta name="apple-mobile-web-app-title" content="Nation Builders">
+<title>Nation Builders</title>
 <meta name="description" content="Found a nation, then live with it. Ten founding choices, fifty years of crises, and one family who lives inside every decision.">
-<meta property="og:title" content="Nation Builder">
+<meta property="og:title" content="Nation Builders">
 <meta property="og:description" content="Found a nation, then live with it. Ten founding choices, fifty years of crises, and one family who lives inside every decision.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Literata:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -132,6 +132,7 @@ button{font:inherit;color:inherit;}
 .pc .fx .none{color:var(--ink-2);font-weight:400;font-style:italic;background:none;padding:0;}
 .pc:hover,.pc.on{transform:rotate(0) translateY(-26px) scale(1.04)!important;z-index:5;box-shadow:0 30px 40px rgba(0,0,0,.5);}
 .pc.on .in{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold);}
+.pc.on{z-index:6;}   /* the chosen card stays on top of one the pointer happens to rest on */
 .up{color:var(--up);} .dn{color:var(--dn);}
 .played{width:100%;max-width:560px;margin-top:22px;background:rgba(0,0,0,.22);border-radius:12px;padding:12px 14px;color:#eef4ee;display:none;align-items:center;gap:14px;flex-wrap:wrap;}
 .played.show{display:flex;animation:pop .3s ease both;}
@@ -178,7 +179,8 @@ button{font:inherit;color:inherit;}
   .side-r .label{display:none;}
   .fam{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
   .meeple{padding:6px;cursor:pointer;} .meeple .role{display:none;} .meeple .row{gap:6px;} .meeple svg{width:22px;height:26px;} .meeple b{font-size:12px;}
-  .bubble{position:absolute;left:10px;right:10px;bottom:calc(100% + 6px);margin:0;max-height:38vh;overflow:auto;}
+  .bubble{position:absolute;left:10px;right:10px;bottom:calc(100% + 6px);margin:0;max-height:24vh;overflow:auto;cursor:pointer;}
+  .bubble.show::after{content:'tap to close';display:block;margin-top:4px;font-family:var(--display);font-style:normal;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);text-align:right;}
   .bubble::before{display:none;}
   .bubble.fate{display:none!important;}
 }
@@ -202,7 +204,7 @@ button{font:inherit;color:inherit;}
 </style>
 </head>
 <body>
-<div id="top"><div class="t"><a class="studio" href="https://fun-time-studio.netlify.app/">Fun Time Studio</a>Nation Builder<span id="top-sub"></span></div><div><button class="ghost-btn" id="install-btn" hidden>⤓ Install</button> <button class="ghost-btn" id="undo-btn" onclick="undo()" title="Take back your last decision (Ctrl+Z)" disabled>↩ Undo</button> <button class="ghost-btn" id="snd">♪ On</button> <button class="ghost-btn" onclick="newGame()">New game</button></div></div>
+<div id="top"><div class="t"><a class="studio" href="https://fun-time-studio.netlify.app/">Fun Time Studio</a>Nation Builders<span id="top-sub"></span></div><div><button class="ghost-btn" id="install-btn" hidden>⤓ Install</button> <button class="ghost-btn" id="undo-btn" onclick="undo()" title="Take back your last decision (Ctrl+Z)" disabled>↩ Undo</button> <button class="ghost-btn" id="snd">♪ On</button> <button class="ghost-btn" onclick="askNewGame()">New game</button></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div class="table">
   <aside class="side side-l">
@@ -410,6 +412,8 @@ const narrow=()=>matchMedia('(max-width:1020px)').matches;
 const lastSaid={};
 function say(r,text,kind='say'){ if(!r) return; lastSaid[r]=[text,kind]; if(narrow()&&kind!=='fate') hush(r); const b=$('b-'+r); b.className='bubble '+kind; b.innerHTML=text; sfx.pop(); void b.offsetWidth; b.classList.add('show'); $('m-'+r).classList.toggle('lit',kind==='impact'); }
 function hush(except){ ROLES.forEach(r=>{ if(r!==except){ $('b-'+r).className='bubble'; $('m-'+r).classList.remove('lit'); } }); }
+// On phones a bubble floats over the cards: a tap puts it away.
+document.addEventListener('click', e => { const b = e.target.closest('.bubble.show'); if (b && narrow()) { b.classList.remove('show'); ROLES.forEach(r => $('m-'+r).classList.remove('lit')); } });
 const speakerFor = raw => { const m=raw.match(/\{([FMSD])\}/); return m?m[1]:null; };
 
 // ═══════════════════════════════════════════════════════════
@@ -469,7 +473,9 @@ function wireHand(choices,{onSelect,onPlay}){
   cards.forEach((card,i)=>{
     card.onmouseenter=()=>preview(i);
     card.onmouseleave=()=>preview(sel);
-    card.onclick=()=>{ if(sel===i){ play(i); return; } sel=i; sfx.select(); cards.forEach(c=>c.classList.toggle('on',c===card)); preview(i); $('played').classList.add('show'); onSelect(i); };
+    card.onclick=()=>{ if(sel===i){ play(i); return; } sel=i; sfx.select(); cards.forEach(c=>c.classList.toggle('on',c===card)); preview(i); $('played').classList.add('show'); onSelect(i);
+      // On phones the Play button is below the cards: bring it into view.
+      if(narrow()) $('play-btn').scrollIntoView({block:'center'}); };
   });
   $('play-btn').onclick=()=>{ if(sel!=null) play(sel); };
   keyHandler=e=>{ const n=+e.key; if(n>=1&&n<=cards.length){ if(sel!==n-1) cards[n-1].click(); } else if(e.key==='Enter'&&sel!=null){ e.preventDefault(); play(sel); } };
@@ -489,6 +495,7 @@ function undo(){
   showScreen(h.screen); sfx.select();
 }
 document.addEventListener('keydown',e=>{
+  if(e.repeat) return;   // holding a key down isn't a choice
   if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
   if(e.metaKey||e.ctrlKey||e.altKey) return; if(keyHandler) keyHandler(e);
 });
@@ -504,13 +511,21 @@ function setupTable(){
   $('fam-label').textContent=`The ${state.family.surname} Family`;
   buildBoard(); buildFamily();
 }
+// The New game button asks first when a game is under way; the ending's button doesn't.
+function askNewGame(){
+  const underway = state && !atSetup && !atEnd;
+  if(!underway || confirm('Start a new nation? This ends the game you are playing.')) newGame();
+}
+let atEnd=false, atSetup=false;   // on the ending, or still on the nation's opening card
 function newGame(){
+  atEnd=false;
   state=newState(rnd(NATIONS), rnd(FAMILIES)); state.queue=[]; knownFaults=[]; shown={}; history=[]; $('undo-btn').disabled=true;
   state.m={...state.nation.base};
   setupTable(); updateBoard(); setYear(1); $('faults').innerHTML='';
   renderSetup();
 }
 function renderSetup(){
+  atSetup=true;
   const N=state.nation;
   center(`<div class="card deal"><div class="frame"><div class="band" style="background:var(--teal)"><span>Your nation</span><span>Year One</span></div><div class="art">${GEO_ART[N.icon]()}</div></div>
     <h1>${N.name}</h1><div class="story"><p><em>${N.desc}.</em> Independence has been won and the old order is gone. Who holds power, how people eat, how disputes are settled: all of it is now yours to decide.</p></div>
@@ -528,6 +543,7 @@ function recomputeFounding(upto){
   for(let i=0;i<upto;i++){ const c=QUESTIONS[i].choices[state.answers[i]]; applyEffects(c.e); state.nation.tags.forEach(t=>{ if(c.g&&c.g[t]) applyEffects(c.g[t]); }); addFlags(c.f); }
 }
 function showQuestion(qi){
+  atSetup=false;
   state.qi=qi; state.year=1; recomputeFounding(qi); updateBoard(); updateFaults(); setYear(1);
   const q=QUESTIONS[qi], col=CAT_COLORS[q.cat], tag=state.nation.tags.find(t=>q.geo&&q.geo[t]);
   center(`<div class="card deal" style="transform:rotate(-1deg)"><div class="frame"><div class="band" style="background:${col}"><span>Founding · ${q.cat}</span><span>${qi+1} of 10</span></div><div class="art">${Q_ART[q.cat]()}</div></div>
@@ -632,7 +648,9 @@ function epilogue(){
       ? `<div class="record">${state.log.map(e=>`<div class="r"><div class="k">${e.k}</div><div>${e.t?`<small>${e.t}</small>`:''}${e.v}</div></div>`).join('')}</div>`
       : `<div class="verdict">${v.p}</div><div class="note"><b>The family</b>Their stories are beside their names. The line on each track marks Year One.</div>${famInline(r=>T(fate(r)))}<div class="inline-only">${neighNote('The Harrows',[`${harrowAt(hf.k,50).name}: “${T(hf.q)}”`])}</div>${neighNote('What became of the neighbours',neighboursMet().map(n=>T(n.fate(H()))))}`}
     <div class="actions"><button class="link" onclick="(${tab==='record'?'epShow()':"epShow('record')"})">${tab==='record'?'← Back to the ending':'Read the record'}</button><button class="primary" onclick="newGame()">Build another nation →</button></div></div>`);
-  window.epShow=show; show(); primaryKeys(); save({k:'end'});
+  // No Enter on the ending: pressing on through the last almanac shouldn't start a new game.
+  atEnd=true;
+  window.epShow=show; show(); keyHandler=null; save({k:'end'});
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -682,7 +700,7 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platfor
 function iosInstallHint(){ return isIOS&&!standalone() ? ' To install it as an app, tap Share, then Add to Home Screen.' : ''; }
 let installPrompt=null;
 addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); installPrompt=e; $('install-btn').hidden=false; });
-addEventListener('appinstalled', ()=>{ installPrompt=null; $('install-btn').hidden=true; toast('Installed. Nation Builder is on your home screen.'); });
+addEventListener('appinstalled', ()=>{ installPrompt=null; $('install-btn').hidden=true; toast('Installed. Nation Builders is on your home screen.'); });
 $('install-btn').onclick=async()=>{ if(!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt=null; $('install-btn').hidden=true; };
 
 // ── offline: the service worker keeps a copy of the game on the device ──

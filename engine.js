@@ -136,7 +136,7 @@ const QUESTIONS = [
        x:"A promise of speech. Without independent courts, it will be tested — and it may not hold.",
        s:"a constitution guaranteeing civil liberties", e:{inc:5,leg:5}, f:["civilRights"]},
       {l:"Both — a full bill of rights", c:"The most ambitious founding document. Every right creates an obligation on someone to honour it.",
-       fi:"The document says {D} has rights. She is {Dage} and cannot read it yet. Someone will have to make it real for her.",
+       fi:"The document says {D} has rights. She is {Dage}, and nobody has asked her what they should be. Someone will have to make them real for her.",
        x:"The most ambitious promise. Every gap between its words and the nation's practice will be cited, loudly.",
        s:"a full bill of rights", e:{inc:10,leg:10,inst:-5}, f:["billOfRights","civilRights"]},
       {l:"A minimal document — rights defined as needed", c:"Rights not written down do not exist when they are inconvenient. Silence is never neutral.",
@@ -385,13 +385,13 @@ const CRISES = [
     choices:[
       {l:"Establish an independent oversight body", c:"Future Delias have somewhere to appeal. This school stays closed for now.", e:{inst:15,leg:5}, f:["oversight"],
        after:"An inspectorate is created with power to audit any office. The administrator is removed two years later. The school reopens after three.",
-       fam:"{D} finishes her lessons at the kitchen table. She remembers the name of the inspectorate for the rest of her life."},
+       fam:"Until it reopens, {D} teaches the youngest children at the kitchen table. She remembers the name of the inspectorate for the rest of her life."},
       {l:"Remove the administrator under existing rules", c:"Fast and specific. The system that appointed him is untouched.", e:{inst:5},
        after:"The school reopens six months later. Some of its children have already gone to work and do not come back.",
-       fam:"{D} returns to her desk. The boy who sat beside her does not."},
+       fam:"{D} walks the neighbours' children back to their desks. One of the desks stays empty."},
       {l:"No action — a district matter", c:"The council stays out of district affairs.", e:{inst:-15,eq:-8,leg:-5}, f:["schoolsLost"],
        after:"Within five years three more valley schools close the same way. The roads are excellent.",
-       fam:"{D}'s schooling ends at {Dage}."}
+       fam:"{D} starts teaching the valley's children in the kitchen, for nothing. There are more of them every month."}
     ]},
   { id:"badyear", era:2, year:14, type:"Hardship", icon:"drought", title:"The bad year",
     w:h=>2+((h.has("privateLand")||h.has("noLandRules"))?3:0)+((h.geo("arid")||h.geo("plains")||h.geo("island"))?2:0),
@@ -421,7 +421,7 @@ const CRISES = [
       const status = h.has("birthrightAll")?"His daughters are citizens by birth. He is not, and the law has no path for him."
         : h.has("openCitizenship")?"His citizenship application is complete. It has been 'under review' for six years."
         : "There is no path in the law for a man like him to become a citizen.";
-      return `<p>A man named Yusuf came here twelve years ago with a letter of introduction and a talent for metalwork. He built a shop, employs four people, pays his taxes, and is raising two daughters born in this nation. ${status}</p><p>A poor harvest made the valley angry. Someone in the market started saying there isn't enough because people like Yusuf are taking it. It isn't true. But it is simple. Last Tuesday, his shop window was broken.</p><p>{D} plays with Yusuf's daughter Amara. She asked {F} why Amara's family wasn't safe here. He said of course they're safe. {D} looked at him as if she were waiting for the rest of the answer.</p>`;},
+      return `<p>A man named Yusuf came here twenty-four years ago with a letter of introduction and a talent for metalwork. He built a shop, employs four people, pays his taxes, and is raising two daughters born in this nation. ${status}</p><p>A poor harvest made the valley angry. Someone in the market started saying there isn't enough because people like Yusuf are taking it. It isn't true. But it is simple. Last Tuesday, his shop window was broken.</p><p>{D} buys her ink at Yusuf's shop, and his youngest, Amara, follows her around the market. She asked {F} why Amara's family wasn't safe here. He said of course they're safe. {D} looked at him as if she were waiting for the rest of the answer.</p>`;},
     insp:"Inspired by the Chinese Exclusion Act, anti-Jewish laws in 19th-century Europe, and scapegoating in hard economic times.",
     voice:()=>({r:"D",q:"Amara asked me if her family will have to leave. I said no. Was I lying?"}),
     choices:[
@@ -772,7 +772,7 @@ const PAYOFFS = [
     story:h=>{ const vet=h.has("S_soldier")||h.fam.sonSoldier;
       return `<p>Eleven years into the appeals process, seventeen veterans and three hundred of their sons walked into the land office at dawn and did not walk out. They have not harmed anyone. They have burned the files marked \"clerical error\".</p><p>Their demand is the one written on their discharge papers: forty acres each, as promised.</p><p>${vet?"{S} is not inside, but he knows every name on their list, and his own is on it.":"Tomas is one of the seventeen. {S} took him bread on the first night and stayed until morning."}</p>`; },
     insp:"Inspired by the Bonus Army's camp of 1932, the occupations of land offices in Latin America, and veterans' movements after every war.",
-    voice:h=>(h.has("S_soldier")||h.fam.sonSoldier)?{r:"S",q:"Twenty years of appeals. They didn't burn the office. They burned the files that lied."}:{r:"S",q:"Tomas fought so we could have a country. Now he's sitting in its land office, waiting for it to keep its word."},
+    voice:h=>(h.has("S_soldier")||h.fam.sonSoldier)?{r:"S",q:"Eleven years of appeals. They didn't burn the office. They burned the files that lied."}:{r:"S",q:"Tomas fought so we could have a country. Now he's sitting in its land office, waiting for it to keep its word."},
     choices:[
       {l:"Grant the land now", c:"The promise is kept, under pressure. Others will learn how it was done.", e:{pros:-8,leg:5,inst:-5}, f:["veteransHonored"],
        after:"The land is granted within a month. The veterans walk out to applause. Every unpaid promise in the nation takes note of the method.",
@@ -841,7 +841,7 @@ const PAYOFFS = [
     cause:h=>`Set in motion in Year ${since("dynasty")}, when ${state.nation.name} let the founder's heir take the empty chair.`,
     story:h=>`<p>The heir who took the chair in Year ${since("dynasty")} has died. His son is nineteen, has never held any office, and has announced that he will take his father's place, as his father took his grandfather's.</p><p>Nobody alive in the government remembers the founding. The founding document says nothing about any of this, because the men who wrote it assumed they would always be there.</p><p>{S} was a young man when the founder died. Now he watches the founder's grandson on the newspaper's front page.</p>`,
     insp:"Inspired by hereditary republics from the Venetian doges to modern family dictatorships, and the third-generation crises of founding dynasties.",
-    voice:()=>({r:"S",q:"I was young when the founder died. Now his grandson wants the chair. Nobody has asked what the chair is for."}),
+    voice:()=>({r:"S",q:"I remember the day the founder died. Now his grandson wants the chair. Nobody has asked what the chair is for."}),
     choices:[
       {l:"Let the assembly choose", c:"The chair becomes an office again.", e:{leg:10,inst:10,coh:-8}, f:["peacefulTransfer"],
        after:"The assembly chooses a provincial governor nobody had heard of. The founder's grandson goes to university, and later writes a well-reviewed history of his family.",
@@ -1034,6 +1034,7 @@ function almanacYears(from, to){
   // The first almanac to reach the parents' last decade fixes both death years, so the
   // ending can never name a year the almanac skipped (an overdue death moves to `from`)
   if(to>=40){ state.deathYear=state.deathYear||{}; for(const r of ["F","M"]) if(!state.deathYear[r]) state.deathYear[r]=Math.max(parentDeathYear(r), from); }
+  let quietShown=false;   // one "quiet year" line per almanac; other empty years are left out
   for(let y=from; y<=to; y++){
     const items=[];
     for(const [r,age,txt] of FAMILY_MILESTONES){
@@ -1054,11 +1055,13 @@ function almanacYears(from, to){
       const used=new Set(state.newsUsed||[]), rnd=seededRandom((state.seed||1)+y*7919);
       const fits=NEWS.map((n,i)=>i).filter(i=>NEWS[i][0](h)), quiet=i=>i>=NEWS.length-3;
       const fresh=fits.filter(i=>!used.has(i)&&!quiet(i)), list=fresh.length?fresh:fits.filter(quiet);
-      const i=list[Math.floor(rnd()*list.length)];
-      if(!quiet(i)) state.newsUsed=[...(state.newsUsed||[]), i];
-      items.push({kind:"nation", text:NEWS[i][1]});
+      if(fresh.length||!quietShown){
+        const i=list[Math.floor(rnd()*list.length)];
+        if(!quiet(i)) state.newsUsed=[...(state.newsUsed||[]), i]; else quietShown=true;
+        items.push({kind:"nation", text:NEWS[i][1]});
+      }
     }
-    out.push({year:y, items});
+    if(items.length) out.push({year:y, items});
   }
   return out;
 }
@@ -1133,8 +1136,9 @@ function foundingSentence(){
 function pickCrises(era){
   const h=H();
   const pool=CRISES.filter(c=>c.era===era&&!state.used.has(c.id)).map(c=>({c,w:c.w(h)})).filter(x=>x.w>0);
-  // Forced cards come first, up to three: crises the founding forces, then consequence payoffs
-  const out=pool.filter(x=>x.w>=100).sort((a,b)=>(!!a.c.payoff-!!b.c.payoff)||(a.c.year-b.c.year)).slice(0,3).map(x=>x.c);
+  // Forced cards always come: crises the founding forces, then consequence payoffs.
+  // (Capping them at three silently dropped a required crisis in a few games.)
+  const out=pool.filter(x=>x.w>=100).sort((a,b)=>(!!a.c.payoff-!!b.c.payoff)||(a.c.year-b.c.year)).map(x=>x.c);
   let rest=pool.filter(x=>x.w<100);
   while(out.length<2&&rest.length){
     let r=Math.random()*rest.reduce((s,x)=>s+x.w,0), i=0;
@@ -1177,7 +1181,7 @@ function vignette(r){
     return ["Works at {Swork} for wages that buy a little less every year.","Works at {Swork}, steady, and has married. He reads the newspaper with a pencil in his hand.","Is a foreman at {Swork} and is saving to start something of his own."][t];
   }
   if(h.has("schoolsLost")) return "Teaches herself from borrowed books, since there is no longer a school to teach her.";
-  return ["Works, as most girls her age do. She reads at night by a candle she pays for herself.","Has finished what schooling there is and is fighting for the next step.","Is studying in the capital. Her letters home are full of words her father has to look up."][t];
+  return ["Works, as most women in the valley do. She still reads at night, by a candle she pays for herself.","Finished what schooling there was, and now fights for the next step, for her children if not for herself.","Studied in the capital. Her letters home were full of words her father had to look up; now she teaches them to others."][t];
 }
 
 function fate(r){

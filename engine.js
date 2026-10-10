@@ -1180,7 +1180,7 @@ function vignette(r){
     if(h.has("S_soldier")) return "Carries the war in his left leg and somewhere else he won't name. Works when he can.";
     return ["Works at {Swork} for wages that buy a little less every year.","Works at {Swork}, steady, and has married. He reads the newspaper with a pencil in his hand.","Is a foreman at {Swork} and is saving to start something of his own."][t];
   }
-  if(h.has("schoolsLost")) return "Teaches herself from borrowed books, since there is no longer a school to teach her.";
+  if(h.has("schoolsLost")) return "Taught herself from borrowed books after the schools closed, and lends them now to the valley's children.";
   return ["Works, as most women in the valley do. She still reads at night, by a candle she pays for herself.","Finished what schooling there was, and now fights for the next step, for her children if not for herself.","Studied in the capital. Her letters home were full of words her father had to look up; now she teaches them to others."][t];
 }
 
@@ -1324,3 +1324,42 @@ const FOR_GROWNUPS = {
 
 const inShort = card => card && (card.qi != null ? IN_SHORT_Q[card.qi] : IN_SHORT[card.id]) || null;
 const forGrownups = card => card && (card.qi != null ? FOR_GROWNUPS['Q' + card.qi] : FOR_GROWNUPS[card.id]) || null;
+
+// ═══════════════════════════════════════════════════════════
+// FAMILY LABELS THAT GROW UP — what each member is doing at their age now,
+// shown under their name. Children's lives turn on how the nation treats them
+// (the same score that writes their fates); story flags win where they apply.
+// ═══════════════════════════════════════════════════════════
+const RELATION = { F:"Father", M:"Mother", S:"Son", D:"Daughter" };
+const LIFE_LABELS = {
+  Vael: {
+    F:(a,h)=>h.has("F_lostLand")?"warehouse worker":a>=65?"elder; still walks the six acres":"farmer & elder",
+    M:a=>a>=68?"retired midwife; still called at night":"midwife & trader",
+    S:(a,h,t)=>h.has("S_radical")?"union organiser":h.has("S_soldier")?"veteran":a<21?"apprentice carpenter":a>=36&&t>=1?"master carpenter":"carpenter",
+    D:(a,h,t,y)=>a<13?"learning her letters":a<20?(h.has("schoolsLost")?"teaching herself from borrowed books":"at school, top of her class")
+      :[ "seamstress who reads at night", "clerk to the regional council", y>=35?"regional councillor":"clerk to the regional council" ][t],
+  },
+  Ossian: {
+    F:(a,h)=>h.has("F_lostLand")?"warehouse worker":a>=68?"old smith; still on the council":"blacksmith & councilman",
+    M:a=>a>=72?"retired innkeeper":"innkeeper",
+    S:(a,h,t)=>h.has("S_radical")?"union organiser":a<28?"returned soldier":t>=2?"veteran; foreman at the foundry":"veteran; foundryman",
+    D:(a,h,t)=>a<20?"wants to be a physician":a<25?(t>=1?"studying medicine":"nursing, and studying at night")
+      :[ "district nurse", "physician", "physician" ][t],
+  },
+  Tarn: {
+    F:(a,h)=>h.has("F_lostLand")?"warehouse worker":h.has("commonLand")?"farmer on the common land":h.has("F_ownsLand")?"farmer, on his own land":a>=65?"old tenant farmer":"tenant farmer",
+    M:a=>a>=68?"retired teacher":"seamstress & teacher",
+    S:(a,h,t)=>h.has("S_radical")?"union organiser":h.has("S_soldier")?"veteran":a>=32&&t>=2?"foreman at the docks":"dock worker",
+    D:(a,h,t,y)=>a<17?"helps her mother teach":a<22?(h.has("schoolsLost")?"teaching in the front room":"training to teach")
+      :[ "teaches in her front room, unpaid", "teacher at the valley school", y>=35?"head of the teachers' college":"teacher at the valley school" ][t],
+  },
+};
+
+// "Son · carpenter" for member r in a given year.
+function roleAt(r, year){
+  const fam = state.family, base = fam.members[ROLE_IDX[r]].role;
+  const fn = LIFE_LABELS[fam.surname] && LIFE_LABELS[fam.surname][r];
+  if(!fn) return base.replace(' — ', ' · ');
+  const sc = scores(), t = tier(sc[r], ...TH[r]);
+  return `${RELATION[r]} · ${fn(ageAt(r, year), H(), t, year)}`;
+}

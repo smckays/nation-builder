@@ -396,7 +396,7 @@ const MEEPLE=c=>`<svg viewBox="0 0 36 40"><path d="M18 2 a7 7 0 1 1 0 14 a7 7 0 
 const STONE=`<svg viewBox="0 0 36 40"><path d="M8 38 L8 14 Q18 0 28 14 L28 38 Z" fill="#cfc4b1"/><path d="M18 10 L18 26 M12 16 L24 16" stroke="#5c564c" stroke-width="3"/></svg>`;
 function buildFamily(){
   $('fam').innerHTML=ROLES.map(r=>{ const m=state.family.members[ROLE_IDX[r]];
-    return `<div class="meeple" id="m-${r}"><div class="row"><span id="ic-${r}">${MEEPLE(COLORS[r])}</span><div><b id="nm-${r}"></b><span class="role">${m.role.split(' — ')[0]} · ${m.role.split(' — ')[1]||''}</span></div></div><div class="bubble" id="b-${r}"></div></div>`; }).join('');
+    return `<div class="meeple" id="m-${r}"><div class="row"><span id="ic-${r}">${MEEPLE(COLORS[r])}</span><div><b id="nm-${r}"></b><span class="role" id="ro-${r}"></span></div></div><div class="bubble" id="b-${r}"></div></div>`; }).join('');
   buildHarrows(); updateAges();
   ROLES.forEach(r=>{
     $('m-'+r).onclick=()=>{ if(narrow()&&lastSaid[r]) say(r,...lastSaid[r]); };
@@ -406,7 +406,10 @@ function buildFamily(){
 const famInline=(fn)=>`<div class="inline-only inline-fam">${ROLES.map(r=>`<p><b>${first(r)}.</b> ${fn(r)}</p>`).join('')}</div>`;
 const deadAt = y => ["F","M"].filter(r=>state.deathYear&&state.deathYear[r]&&state.deathYear[r]<=y);
 function updateAges(dead=deadAt(state.year)){
-  ROLES.forEach(r=>{ const m=state.family.members[ROLE_IDX[r]]; $('nm-'+r).textContent=`${m.name} · ${dead.includes(r)?'†':ageAt(r,state.year)}`; $('ic-'+r).innerHTML=dead.includes(r)?STONE:MEEPLE(COLORS[r]); });
+  ROLES.forEach(r=>{ const m=state.family.members[ROLE_IDX[r]]; $('nm-'+r).textContent=`${m.name} · ${dead.includes(r)?'†':ageAt(r,state.year)}`; $('ic-'+r).innerHTML=dead.includes(r)?STONE:MEEPLE(COLORS[r]);
+    // what they're doing now; a parent who has died keeps the label from their last year
+    const y=dead.includes(r)&&state.deathYear&&state.deathYear[r]?Math.min(state.year,state.deathYear[r]):state.year;
+    $('ro-'+r).textContent=roleAt(r,y); });
   updateHarrows();
 }
 // The Harrows: a small row of pieces with one shared bubble

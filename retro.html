@@ -333,7 +333,10 @@ function crisisScene(cr){
   const island=state.nation.tags.includes("island");
   return ({plague:SC.harbor({sick:true}), road:SC.gate(), landgrab:SC.fields({stakes:true}), school:SC.school({closed:true}), badyear:island?SC.storm():SC.drought(),
     nativism:SC.shop(), petition:SC.square({fire:true}), tariff:SC.gate({customs:true}), flood:SC.flood(), veterans:SC.office(), strike:SC.factory(),
-    succession:SC.council({empty:true}), march:SC.march(), rising:SC.torches(), printer:SC.press()})[cr.id] || SC.title();
+    succession:SC.council({empty:true}), march:SC.march(), rising:SC.torches(), printer:SC.press(),
+    titlesuits:SC.office(), compensation:SC.council({seed:5}), compensation2:SC.council({seed:6}), feversummer:SC.harbor({sick:true}), seconddry:SC.drought(),
+    readingtest:SC.school(), workshops:SC.shop(), patron:SC.gate(), inspector:SC.office(), secession:SC.gate({customs:true}),
+    occupation:SC.office(), generalstrike:SC.factory(), railway:SC.fields({stakes:true}), secondwalk:SC.march(), heirsheir:SC.council({empty:true})})[cr.id] || SC.title();
 }
 
 let scene=null, frame=0;
@@ -640,11 +643,11 @@ async function main(){
   if(!faults.length){ await page({title:'FAULT LINES',text:'No contradiction leaps off the page. That does not mean there are none — only that they will have to be found the hard way.'}); if(!alive()) return; }
 
   // ── the eras ──
-  for(const era of [2,3]){
+  for(const era of [2,3,4]){
     state.era=era; state.queue=pickCrises(era);
     for(let ci=0; ci<state.queue.length; ci++){
       const cr=state.queue[ci], h=H(); state.ci=ci; state.used.add(cr.id); state.year=cr.year;
-      hud(NU,`YEAR ${cr.year}`); setScene(crisisScene(cr)); card(`YEAR ${cr.year} · ${cr.type.toUpperCase()}`,cr.title.toUpperCase()); sfx.sting();
+      hud(NU,`YEAR ${cr.year}`); setScene(crisisScene(cr)); card(`YEAR ${cr.year} · ${cr.payoff?'CONSEQUENCE':cr.type.toUpperCase()}`,cr.title.toUpperCase()); sfx.sting();
       const ps=paras(T(cr.story(h)));
       for(let pi=0;pi<ps.length;pi++){ await sayLong(ps[pi],{title:pi===0?cr.title:'',big:pi===0}); if(!alive()) return; }
       const v=cr.voice&&cr.voice(h);

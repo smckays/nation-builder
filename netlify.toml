@@ -1,7 +1,7 @@
 # The published site: the tabletop version as an installable app (index.html, engine.js,
 # manifest, service worker, icons). The service worker's cache name is stamped with the commit.
 [build]
-  command = "rm -rf _site && mkdir _site && cp tabletop.html _site/index.html && cp engine.js manifest.webmanifest _site/ && cp -R icons _site/icons && sed \"s/__BUILD__/${COMMIT_REF:-local}/\" sw.js > _site/sw.js"
+  command = "rm -rf _site && mkdir _site && cp tabletop.html _site/index.html && cp engine.js handoff.js manifest.webmanifest _site/ && cp -R icons _site/icons && sed \"s/__BUILD__/${COMMIT_REF:-local}/\" sw.js > _site/sw.js"
   publish = "_site"
 
 [[headers]]

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nation Builder: A Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --k:#000000; --nv:#1d2b53; --pl:#7e2553; --dg:#008751; --br:#ab5236; --dk:#5f574f; --lg:#c2c3c7; --wh:#fff1e8;
+  --rd:#ff004d; --or:#ffa300; --yl:#ffec27; --gr:#00e436; --bl:#29adff; --lv:#83769c; --pk:#ff77a8; --pe:#ffccaa;
+  --pix:'Press Start 2P', monospace; --vt:'VT323', monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--k);color:var(--wh);}
+body{font-family:var(--vt);font-size:25px;line-height:1.15;min-height:100vh;display:flex;justify-content:center;-webkit-font-smoothing:none;}
+#app{width:100%;max-width:820px;padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px;}
+#hud{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--pix);font-size:9px;letter-spacing:.06em;color:var(--lg);min-height:22px;}
+#hud-c{color:var(--yl);}
+.hud-btn{font-family:var(--vt);font-size:18px;line-height:1;color:var(--lg);background:none;border:2px solid var(--dk);padding:4px 6px;cursor:pointer;}
+#stage{position:relative;width:100%;aspect-ratio:16/9;background:var(--k);border:4px solid var(--wh);box-shadow:0 0 0 4px var(--k),0 0 0 6px var(--dk);overflow:hidden;cursor:pointer;touch-action:manipulation;}
+#scene{width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;}
+#stage::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.45) 100%);}
+#card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:0 6%;opacity:0;background:rgba(0,0,0,.55);}
+#card.show{animation:card 2.4s steps(8) forwards;}
+@keyframes card{0%{opacity:0}12%{opacity:1}75%{opacity:1}100%{opacity:0}}
+#card .c1{font-family:var(--pix);font-size:clamp(9px,1.8vw,13px);color:var(--yl);margin-bottom:12px;letter-spacing:.1em;}
+#card .c2{font-family:var(--pix);font-size:clamp(14px,3.6vw,26px);color:var(--wh);text-shadow:3px 3px 0 var(--k);line-height:1.4;}
+#tag{position:absolute;left:0;top:0;font-family:var(--pix);font-size:clamp(7px,1.3vw,10px);color:var(--k);background:var(--yl);padding:3px 5px;pointer-events:none;transform:translate(-50%,-100%);white-space:nowrap;display:none;}
+#box{position:relative;background:var(--nv);padding:16px 18px 18px;min-height:190px;
+  box-shadow:inset 0 0 0 2px var(--k),inset 0 0 0 4px var(--wh),inset 0 0 0 6px var(--nv),0 0 0 2px var(--k);cursor:pointer;}
+#who{font-family:var(--pix);font-size:9px;line-height:1.8;color:var(--yl);margin-bottom:6px;}
+#who:empty{display:none;}
+#who small{color:var(--lg);font-size:8px;margin-left:8px;}
+#text{white-space:pre-wrap;}
+#text.think{color:var(--pk);font-style:italic;}
+#text.narr{color:var(--lg);}
+#text.echo{color:var(--lv);}
+#menu{list-style:none;margin-top:12px;}
+#menu:empty{display:none;}
+#menu li{padding:4px 6px 4px 28px;position:relative;cursor:pointer;color:var(--lg);}
+#menu li .n{color:var(--lv);margin-right:6px;}
+#menu li small{display:block;color:var(--lv);font-size:19px;}
+#menu li.on{color:var(--wh);background:rgba(255,241,232,.07);}
+#menu li.on::before{content:'▶';position:absolute;left:6px;color:var(--yl);animation:blink .8s steps(2) infinite;}
+#more{position:absolute;right:18px;bottom:10px;color:var(--yl);display:none;animation:bob .7s steps(2) infinite;}
+#more.show{display:block;}
+#pad{display:none;gap:10px;justify-content:space-between;}
+#pad button{flex:1;font-family:var(--pix);font-size:12px;padding:12px 0;background:var(--nv);color:var(--wh);border:2px solid var(--wh);touch-action:manipulation;}
+#pad button:active{background:var(--lv);}
+@media (pointer:coarse){ #pad{display:flex;} }
+@keyframes blink{50%{opacity:0}}
+@keyframes bob{50%{transform:translateY(3px)}}
+#foot{display:flex;justify-content:space-between;font-family:var(--pix);font-size:8px;color:var(--dk);gap:8px;}
+@media(max-width:640px){ body{font-size:22px;} #app{padding:8px 10px 20px;} #box{padding:14px 14px 18px;min-height:200px;} #foot .keys{display:none;} }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud"><span id="hud-l">NATION BUILDER · A LIFE</span><span id="hud-c"></span><span><button class="hud-btn" id="btn-restart" title="Start over">↺</button></span></div>
+  <div id="stage"><canvas id="scene" width="192" height="108"></canvas><div id="tag"></div><div id="card"><div class="c1"></div><div class="c2"></div></div></div>
+  <div id="pad"><button data-d="-1">◀ WALK</button><button data-d="0">TALK</button><button data-d="1">WALK ▶</button></div>
+  <div id="box">
+    <div id="who"></div>
+    <div id="text"></div>
+    <ul id="menu"></ul>
+    <div id="more">▼</div>
+  </div>
+  <div id="foot"><span>PROTOTYPE · YEAR 1</span><span class="keys">← → WALK · ENTER TALK · TAP TO WALK THERE</span></div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+// First-person prototype: you are one member of the family, walking through Year 1.
+// Choices are made by where you go. Each beat maps to a founding question in engine.js
+// (qi) and choice indices there, so effects and flags are the real ones.
+let state = null;
+const $ = id => document.getElementById(id);
+
+// ═══════════════════════════════════════════════════════════
+// PIXEL KIT (from retro.html) — scene is 192×108
+// ═══════════════════════════════════════════════════════════
+const P = {k:'#000000',nv:'#1d2b53',pl:'#7e2553',dg:'#008751',br:'#ab5236',dk:'#5f574f',lg:'#c2c3c7',wh:'#fff1e8',
+           rd:'#ff004d',or:'#ffa300',yl:'#ffec27',gr:'#00e436',bl:'#29adff',lv:'#83769c',pk:'#ff77a8',pe:'#ffccaa'};
+const W=192, Hh=108, GROUND=76;
+const cv=$('scene'), g=cv.getContext('2d');
+function R(x,y,w,h,c){ g.fillStyle=c; g.fillRect(Math.round(x),Math.round(y),w,h); }
+function PX(x,y,c){ R(x,y,1,1,c); }
+function circle(cx,cy,r,c){ for(let y=-r;y<=r;y++){ const w=Math.floor(Math.sqrt(r*r-y*y)); R(cx-w,cy+y,2*w+1,1,c); } }
+function dither(x,y,w,h,c){ for(let j=0;j<h;j++) for(let i=(j%2);i<w;i+=2) PX(x+i,y+j,c); }
+function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const SKIES = { day:[P.bl,P.bl,P.bl,P.lg], dusk:[P.nv,P.pl,P.rd,P.or], night:[P.k,P.k,P.nv,P.nv] };
+function sky(name, yEnd){ const cs=SKIES[name], bh=yEnd/cs.length; cs.forEach((c,i)=>R(0,i*bh,W,bh+1,c)); for(let i=1;i<cs.length;i++) dither(0,Math.round(i*bh)-1,W,2,cs[i]); }
+function stars(f,n,seed,maxY){ const r=rng(seed); for(let i=0;i<n;i++){ const x=r()*W|0, y=r()*maxY|0; PX(x,y,(f+i)%17===0?P.yl:(i%3?P.lg:P.wh)); } }
+function hills(y,amp,freq,ph,c){ for(let x=0;x<W;x++){ const h=Math.round(y+Math.sin(x*freq+ph)*amp+Math.sin(x*freq*2.3+ph*1.7)*amp*.4); R(x,h,1,Hh-h,c); } }
+function house(x,y,w,h,wall,roof,o={}){
+  R(x,y,w,h,wall); const rh=Math.ceil(w/2);
+  for(let r=0;r<rh;r++){ R(x-1+r,y-r-1,w+2-2*r,1,roof); }
+  if(o.door!==false) R(x+Math.floor(w/2)-1,y+h-4,3,4,o.doorC||P.br);
+  if(o.win) { R(x+2,y+2,2,2,o.win); if(w>9) R(x+w-4,y+2,2,2,o.win); }
+}
+function tree(x,y,c=P.dg,c2=P.gr){ R(x,y,2,6,P.br); circle(x+1,y-2,4,c); PX(x,y-4,c2); PX(x+2,y-3,c2); }
+function smoke(x,y,f,c=P.dk){ for(let i=0;i<5;i++){ const t=(f+i*6)%30; circle(x+Math.round(Math.sin((t+i)/4)*2)+t/4, y-t, 1+Math.floor(t/10), c); } }
+function fire(x,y,f){ const r=rng(f*31+x); for(let i=0;i<6;i++){ const dx=(r()*5|0)-2, dy=-(r()*6|0); PX(x+dx,y+dy,[P.rd,P.or,P.yl][i%3]); } PX(x,y,P.yl); }
+function flagpole(x,y,f,c=P.rd){ R(x,y,1,16,P.lg); for(let i=0;i<8;i++){ const wv=Math.round(Math.sin((f+i)/2)); R(x+1+i,y+wv,1,5,c); } }
+function person(x,y,o={}){
+  const s=o.skin||P.pe, sh=o.shirt||P.bl, hr=o.hair||P.br, pa=o.pants||P.nv, f=o.f||0;
+  const b = o.bob!=null ? (((f+o.bob)%6)<3?0:1) : 0; y-=b;
+  const sm = o.small?2:0; y+=sm;
+  R(x+1,y+1,3,3,s); R(x+1,y,3,1,hr); PX(x+1,y+1,hr); if(o.long) { R(x,y+1,1,4,hr); R(x+4,y+1,1,4,hr); }
+  R(x,y+4,5,4-sm/2,sh); PX(x,y+7-sm/2,s); PX(x+4,y+7-sm/2,s);
+  const step = o.walk ? ((f>>2)%2) : 0;
+  R(x+1-step,y+8-sm/2,1,3-sm/2,pa); R(x+3+step,y+8-sm/2,1,3-sm/2,pa);
+  if(o.hat) R(x,y,5,1,o.hat);
+  if(o.item==="rifle"){ R(x+5,y+1,1,8,P.dk); PX(x+5,y,P.lg); }
+  if(o.item==="stakes"){ for(let i=0;i<3;i++) R(x+5+i,y+2-i,1,8,P.wh); }
+  if(o.item==="ledger"){ R(x+4,y+4,4,3,P.wh); PX(x+5,y+5,P.dk); }
+}
+const SHIRTS=[P.rd,P.bl,P.or,P.lv,P.dg,P.br,P.pk,P.lg], HAIRS=[P.br,P.k,P.dk,P.or,P.k,P.br];
+function crowd(x0,x1,y,n,seed,o={}){ const r=rng(seed); for(let i=0;i<n;i++){ const x=x0+(x1-x0)*i/n+r()*3; person(x,y+(r()*3|0),{...o,shirt:SHIRTS[r()*8|0],hair:HAIRS[r()*6|0],bob:o.bob?i:null}); } }
+function marker(x,y,f,c=P.yl){ const b=(f>>3)%2; R(x+1,y-6+b,3,1,c); PX(x+2,y-5+b,c); }
+function bang(x,y,f){ const b=(f>>3)%2; R(x+1,y-9+b,3,6,P.wh); R(x+2,y-8+b,1,3,P.rd); PX(x+2,y-4+b,P.rd); }
+
+// ═══════════════════════════════════════════════════════════
+// FAMILY LOOK — shirt by role; hair per family
+// ═══════════════════════════════════════════════════════════
+const ROLES=["F","M","S","D"];
+const FAMSHIRT={F:P.dg,M:P.pl,S:P.bl,D:P.rd};
+const FAMHAIR={Vael:P.or,Ossian:P.k,Tarn:P.br};
+const famLook = (r, fam) => ({shirt:FAMSHIRT[r], hair:FAMHAIR[fam.surname]||P.br, long:r==="M"||r==="D", small:r==="D" && fam.members[3].age<13});
+// How someone else in the family is labelled, seen from the player's seat.
+function kin(r){
+  const me=state.me; if(r===me) return "You";
+  const map={F:{M:"Your wife",S:"Your son",D:"Your daughter"}, M:{F:"Your husband",S:"Your son",D:"Your daughter"},
+             S:{F:"Your father",M:"Your mother",D:"Your sister"}, D:{F:"Your father",M:"Your mother",S:"Your brother"}};
+  return map[me][r];
+}
+
+// ═══════════════════════════════════════════════════════════
+// YEAR 1 — three beats in one day
+// npc: x · name · look · lines · c (choice index in QUESTIONS[qi]) · act (the verb on the menu)
+// think: your own thought, by role · fam: what each family member says if you talk to them
+// react: after choice c, the first of these whose speaker isn't you
+// ═══════════════════════════════════════════════════════════
+const BEATS = [
+  { qi:0, time:"MORNING", place:"THE SQUARE", sky:"day",
+    intro:[ "The old rulers are gone. Today the valley decides who rules next.",
+            "The founders call a division. Everyone walks to the side they back. Then they count heads." ],
+    think:{ F:"[[Twenty years building {Fhold}. Today, at last, my say counts.||Twenty years on a field I'll never own. Does my say count today?]]",
+            M:"I've kept this family fed through three bad winters. Nobody has ever asked my opinion.",
+            S:"Men are shouting about rights. For once I'm close enough to hear.",
+            D:"I'm {Dage}. The counter counts heads. He doesn't ask how old they are." },
+    prompt:"Walk to the side you'll stand with.",
+    npcs:[
+      {x:16, name:"Silas Harrow", sub:"400 acres and the deep well", look:{shirt:P.pl,hair:P.lg,hat:P.k},
+       lines:["Those who own the land pay for the nation.","So landowners should vote for who runs it."], c:0, act:"Stand with the landowners"},
+      {x:66, name:"The Founders", sub:"seven old revolutionaries", group:true,
+       lines:["We won the war.","Let us steer the peace. Seven wise heads beat a shouting crowd."], c:1, act:"Stand with the Founders"},
+      {x:122, name:"Captain Varga", sub:"led the militia", look:{shirt:P.rd,hair:P.k,hat:P.nv,item:"rifle",long:true},
+       lines:["Our neighbours have armies. They won't wait for a debate.","One leader. Clear orders."], c:2, act:"Stand with the Captain"},
+      {x:174, name:"River folk", sub:"from the far villages", look:{shirt:P.dg,hat:P.yl},
+       lines:["Let every valley run itself.","We only join together when someone attacks."], c:3, act:"Stand with the river folk"}],
+    famAt:{F:38,M:88,S:104,D:146},
+    fam:{ F:"[[Landowners voting suits me. But Silas will own the vote the way he owns everything else.||If only owners vote, men like me just watch.]]",
+          M:"Whatever they decide, look at who's missing from the room.",
+          S:"The Captain has the soldiers behind her. That should scare people more than it does.",
+          D:"I counted the women at the Founders' table. None." },
+    outcome:"They count twice. Your side wins by one head. Yours.",
+    react:{ 0:[["M","Owners vote. My name isn't on the deed. So I don't."],["F","[[My name's on the deed. I'll vote. My wife won't.||No land, no vote. That's us, then.]]"]],
+            1:[["M","Seven old men. In twenty years, seven of their sons."],["F","Good men, the Founders. Their sons won't have to be."]],
+            2:[["S","One person holds everything. Pray she's as good as she seems."],["M","Nobody asked the {fam} family. Nobody will."]],
+            3:[["S","Wait until the river villages need something from the hill villages."],["F","The valley runs the valley. Good. Until it isn't."]] } },
+
+  { qi:1, time:"NOON", place:"THE FIELDS", sky:"day",
+    intro:[ "A surveyor trips on the road and drops his bundle of stakes at your feet.",
+            "Whoever plants them marks out the whole valley. Everyone is watching who you give them to." ],
+    think:{ F:"[[{FholdCap} is ours already. A stake would just make it official.||I've worked this field eleven years. A stake with my name on it. Imagine.]]",
+            M:"Land means you eat when other people don't. I've seen both.",
+            S:"Whoever plants the first stake owns the future. I can feel it in my arms.",
+            D:"The stakes are heavier than they look." },
+    prompt:"Carry the stakes to someone.",
+    carry:"stakes",
+    npcs:[
+      {x:16, name:"The surveyor", sub:"has a book of names", look:{shirt:P.lg,hair:P.dk,hat:P.br,item:"ledger"},
+       lines:["Plant a stake, sign my book, and it's yours forever.","Simple."], c:0, act:"Give him the stakes"},
+      {x:66, name:"Old Osk", sub:"by the common gate", look:{shirt:P.br,hair:P.wh,long:true},
+       lines:["Nobody owns the valley.","Share the fields. Keep what you grow."], c:1, act:"Give her the stakes"},
+      {x:122, name:"The Treasury clerk", sub:"new job, new coat", look:{shirt:P.nv,hair:P.k,item:"ledger"},
+       lines:["The forest and the ore belong to the nation.","You farm. The nation handles the rest."], c:2, act:"Give him the stakes"},
+      {x:174, name:"Silas Harrow", sub:"leaning on his well", look:{shirt:P.pl,hair:P.lg,hat:P.k},
+       lines:["Stakes? Rules?","Let every man hold what he can hold."], c:3, act:"Give Silas the stakes"}],
+    famAt:{F:40,M:92,S:100,D:148},
+    fam:{ F:"[[Owning land would suit us. It would suit Silas even better.||If land is sold, I'll never afford it. If it's shared, I finally get a field.]]",
+          M:"Ask who checks the clerk's ledger. Nobody, that's who.",
+          S:"Silas wants no rules because he's the biggest man in the valley.",
+          D:"If everyone shares the field, who decides when to plant?" },
+    outcomes:[ "By afternoon the valley is a grid of stakes and names.",
+               "The stakes go on the fire. The valley stays one field.",
+               "The clerk paints NATIONAL on every tree past the fence line.",
+               "Silas drops the stakes down his well. Only he laughs." ],
+    react:{ 0:[["F","[[{FholdCap} is ours, free and clear. Our tenant neighbour's never will be.||Land goes up in price every year. I'll never catch it.]]"],["M","Money sticks to whoever had it first. Watch."]],
+            1:[["F","[[Shared? Even ours?||A field to work. Not owned. Worked. That's enough.]]"],["M","Every planting season will be a meeting. A long one."]],
+            2:[["F","The timber past our fence is the nation's now. I can apply to cut it. That takes two years."],["S","Whoever runs the nation now runs the money too."]],
+            3:[["S","No rules means Silas's rules."],["F","He'll fence what he likes. Who's going to stop him?"]] } },
+
+  { qi:8, time:"DUSK", place:"THE OLD CHAPEL", sky:"dusk",
+    intro:[ "The old rulers' bell sits on a cart. It used to call their children to lessons.",
+            "Tonight it goes to whoever will teach the valley's children. You've got the cart." ],
+    think:{ F:"I never learned my letters. I sign with an X and hope the paper's honest.",
+            M:"I do sums in my head faster than the clerk. Nobody taught me. Imagine if they had.",
+            S:"I left school at twelve. Nobody asked if I wanted to.",
+            D:"This one is about me. Every word they say tonight is about me." },
+    prompt:"Pull the cart to whoever gets the bell.",
+    carry:"cart",
+    npcs:[
+      {x:16, name:"Father Anselm", sub:"at the chapel door", look:{shirt:P.k,hair:P.lg},
+       lines:["Hang it in my chapel.","Families who can pay will send their children."], c:0, act:"Give the bell to the chapel"},
+      {x:66, name:"Mayor Pell", sub:"outside the new town hall", look:{shirt:P.or,hair:P.dk,long:true},
+       lines:["Hang it on the town hall.","Every child learns. Everyone pays a little."], c:1, act:"Give the bell to the town hall"},
+      {x:122, name:"Master Grenn", sub:"the joiners' guild", look:{shirt:P.br,hair:P.dk,hat:P.yl},
+       lines:["Bells are for idlers.","Send the children to the workshops. They'll learn a trade."], c:2, act:"Give the bell to the workshops"},
+      {x:174, name:"Schoolmaster Fell", sub:"the Founders' man", look:{shirt:P.lv,hair:P.lg},
+       lines:["Ring it for reading and sums, for everyone.","Anything more, families can buy."], c:3, act:"Give the bell to the schoolmaster"}],
+    famAt:{F:40,M:92,S:100,D:148},
+    fam:{ F:"School's fine. As long as the field gets ploughed.",
+          M:"{D} reads better than I do already. She deserves a real school.",
+          S:"The workshops would take {D}? They don't take girls.",
+          D:"I want the one where I'm allowed to keep going." },
+    outcomes:[ "The bell goes up in the chapel tower. It rings for those who can pay.",
+               "The bell goes up over the town hall. Tomorrow every child in the valley hears it.",
+               "The bell goes to the scrap man. The workshop whistle does its job now.",
+               "The bell goes up over the town hall. Its rope is kept short." ],
+    react:{ 0:[["D","[[We can pay. Half the valley can't.||We can't pay. So that's that.]]"],["M","Money learns. Poverty works."]],
+            1:[["D","A real school. With a roof!"],["F","Taxes, then. Fine. If it's for her."]],
+            2:[["D","I don't want a trade. I want to know things."],["S","So {D} learns what Mother learned. Nothing official."]],
+            3:[["D","Reading and sums. Then what?"],["M","A floor for everyone. The ceiling's for sale."]] } }
+];
+const CLOSING = {
+  F:"I helped shape a nation today. I hope my grandchildren forgive it.",
+  M:"Tomorrow's work is the same as yesterday's. The rules around it aren't.",
+  S:"Fifty years. I'll be old in the country we made today.",
+  D:"I'll be grown up before we know if we got it right. I'll remember today."
+};
+
+// ═══════════════════════════════════════════════════════════
+// SCENES
+// ═══════════════════════════════════════════════════════════
+function drawBackdrop(b, f){
+  if(b.qi===0){
+    sky("day",50); circle(170,12,6,P.yl);
+    house(2,24,34,26,P.lg,P.dk,{win:P.bl}); house(156,22,34,28,P.pe,P.br,{win:P.bl});
+    R(52,8,40,42,P.lg); R(64,14,16,16,P.wh); circle(72,22,6,P.nv); R(72,18,1,5,P.k); R(72,22,3,1,P.k);
+    R(0,50,W,58,P.dk); dither(0,50,W,58,P.lv);
+    R(8,64,22,3,P.lg); R(10,61,18,3,P.lg); // steps
+    R(56,70,24,3,P.br); R(58,73,1,5,P.k); R(77,73,1,5,P.k); // table
+    flagpole(118,56,f);
+    R(168,66,12,10,P.dk); R(167,64,14,2,P.lg); R(173,58,1,6,P.br); // well
+    crowd(36,52,70,3,41,{bob:1,f}); crowd(132,160,70,4,42,{bob:1,f});
+  } else if(b.qi===1){
+    sky("day",44); circle(28,12,6,P.yl); hills(40,3,.06,2,P.lv);
+    for(let j=46;j<Hh;j+=3) R(0,j,W,2,j%6?P.dg:P.gr);
+    house(150,32,16,12,P.wh,P.rd,{win:P.bl});
+    R(60,62,16,1,P.br); R(60,58,1,8,P.br); R(75,58,1,8,P.br); // common gate
+    R(168,66,12,10,P.dk); R(167,64,14,2,P.lg); R(173,58,1,6,P.br); // Silas's well
+    tree(100,52); tree(132,50); tree(140,54);
+  } else {
+    sky("dusk",52); circle(150,46,9,P.or);
+    R(0,52,W,56,P.dg); dither(0,52,W,4,P.dk);
+    R(4,28,26,26,P.lg); for(let r=0;r<14;r++) R(4+r,28-r,26-2*r,1,P.dk); R(15,8,4,8,P.lg); R(13,58,8,0,P.br); R(14,46,6,8,P.br); // chapel
+    house(52,36,30,18,P.pe,P.br,{win:P.yl}); R(64,24,6,6,P.lg); // town hall
+    R(112,42,28,14,P.br); R(110,40,32,3,P.dk); R(116,48,6,4,P.or); smoke(130,30,f,P.lg); // workshop
+    house(160,40,22,14,P.lv,P.nv,{win:P.yl}); // schoolhouse
+  }
+}
+
+// The visible aftermath, layered over the backdrop once a beat is decided.
+function drawAftermath(b, c, f){
+  if(c==null) return;
+  if(b.qi===0){
+    if(c===0){ R(10,58,18,3,P.yl); } // a bunting of landowners on the steps
+    if(c===1){ person(60,62,{shirt:P.k,hair:P.lg,small:true}); }
+    if(c===2){ for(let i=0;i<3;i++) person(108+i*7,GROUND-2,{shirt:P.rd,hat:P.nv,item:"rifle",bob:i,f}); }
+    if(c===3){ for(let x=150;x<190;x+=6) PX(x,48,P.yl); }
+  } else if(b.qi===1){
+    if(c===0){ for(let x=6;x<190;x+=14){ R(x,58,1,8,P.wh); PX(x,57,P.rd); } for(let x=6;x<186;x+=2) PX(x,61,P.lg); }
+    if(c===1){ R(88,70,10,3,P.br); for(let i=0;i<3;i++) fire(90+i*3,69,f+i); }
+    if(c===2){ [100,132,140].forEach(x=>{ R(x,50,2,2,P.wh); }); }
+    if(c===3){ R(173,58,1,6,P.wh); }
+  } else {
+    const at=[[16,10],[66,22],[124,38],[66,22]][c];
+    if(c===2) return; // melted down
+    R(at[0]-2,at[1]-4,5,5,P.yl); PX(at[0],at[1]+1,P.or);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RUNTIME — walking, hotspots, dialog
+// ═══════════════════════════════════════════════════════════
+let frame=0, beat=null, beatIdx=0, choiceMade=null, px=96, target=null, facing=1, busy=false, mode="title", keys={};
+let onArrive=null;
+
+function hotspots(){
+  if(!beat) return [];
+  const hs = beat.npcs.map(n=>({x:n.x, kind:"npc", n}));
+  ROLES.filter(r=>r!==state.me).forEach(r=>hs.push({x:beat.famAt[r], kind:"fam", r}));
+  return hs;
+}
+const near = () => hotspots().filter(h=>Math.abs(h.x-px)<9).sort((a,b)=>Math.abs(a.x-px)-Math.abs(b.x-px))[0];
+
+function draw(){
+  g.clearRect(0,0,W,Hh);
+  if(mode==="title") return drawTitle();
+  if(mode==="pick") return drawPick();
+  if(mode==="night") return drawNight();
+  drawBackdrop(beat, frame);
+  drawAftermath(beat, choiceMade, frame);
+  const h = !busy && choiceMade==null ? near() : null;
+  beat.npcs.forEach(n=>{
+    if(n.group){ for(let i=0;i<3;i++) person(n.x-7+i*6,GROUND-14,{shirt:P.k,hair:P.lg,bob:i,f:frame}); }
+    else person(n.x-2,GROUND-11,{...n.look,bob:n.x,f:frame});
+    if(choiceMade==null && !busy) bang(n.x-2, n.group?GROUND-14:GROUND-11, frame+n.x);
+  });
+  ROLES.filter(r=>r!==state.me).forEach((r,i)=>person(beat.famAt[r]-2,GROUND-11,{...famLook(r,state.family),bob:i,f:frame}));
+  const moving = target!=null || keys.l || keys.r;
+  const carry = choiceMade==null ? beat.carry : null;
+  person(px-2,GROUND-10,{...famLook(state.me,state.family),walk:moving,f:frame,item:carry==="stakes"?"stakes":null});
+  if(carry==="cart"){ const cx=px-2-facing*9; R(cx-3,GROUND-4,9,4,P.br); circle(cx-1,GROUND,1,P.dk); circle(cx+4,GROUND,1,P.dk); R(cx,GROUND-8,3,4,P.yl); }
+  marker(px-2,GROUND-10,frame);
+  showTag(h);
+}
+
+function showTag(h){
+  const t=$('tag');
+  if(!h){ t.style.display="none"; return; }
+  const label = h.kind==="npc" ? h.n.name : first(h.r);
+  const st=$('stage').getBoundingClientRect(), k=st.width/W;
+  t.textContent = (matchMedia('(pointer:coarse)').matches?"TAP: ":"ENTER: ")+label;
+  t.style.left = (h.x*k)+"px"; t.style.top = ((GROUND-22)*k)+"px"; t.style.display="block";
+}
+
+function drawTitle(){
+  sky("night",82); stars(frame,50,3,64); circle(156,18,8,P.wh); circle(160,15,7,P.k);
+  hills(66,5,.045,1,P.dk); dither(0,62,W,10,P.nv); hills(84,4,.07,2.4,P.k);
+  [[30,86],[48,88],[130,87],[150,85],[170,88]].forEach(([x,y],i)=>{ house(x,y,9,7,P.lv,P.pl,{door:false}); PX(x+3,y+3,(frame+i*5)%40<36?P.yl:P.or); });
+  flagpole(95,60,frame);
+}
+let pickFam=null;
+function drawPick(){
+  sky("day",62); circle(160,16,7,P.yl); hills(54,4,.05,1,P.lv); R(0,70,W,38,P.dg);
+  if(!pickFam){
+    FAMILIES.forEach((fam,i)=>{ const x=20+i*60; house(x,48,22,16,P.pe,P.br,{win:P.bl}); ROLES.forEach((r,j)=>person(x-4+j*8,76,{...famLook(r,fam),bob:j,f:frame})); });
+  } else {
+    house(70,46,22,18,P.pe,P.br,{win:P.bl}); smoke(84,26,frame,P.lg);
+    ROLES.forEach((r,j)=>{ const x=36+j*36; person(x,72,{...famLook(r,pickFam),bob:j,f:frame}); if(pickHover===j) marker(x,72,frame); });
+  }
+}
+function drawNight(){
+  sky("night",62); stars(frame,30,5,40); hills(54,4,.05,1,P.nv); R(0,70,W,38,P.nv);
+  house(70,52,22,18,P.pe,P.br,{win:P.yl}); smoke(84,30,frame,P.lg); tree(30,64); tree(150,62);
+  const land=state.answers[1];
+  if(land===0){ for(let x=4;x<190;x+=10){ R(x,72,1,6,P.lg); } R(4,74,186,1,P.lg); }
+  if(land===1){ R(130,82,8,2,P.br); fire(134,81,frame); }
+  ROLES.forEach((r,i)=>person(104+i*9,80,{...famLook(r,state.family),bob:i,f:frame}));
+  marker(104+ROLES.indexOf(state.me)*9,80,frame);
+}
+
+function loop(){
+  frame++;
+  if(mode==="walk" && !busy){
+    let d = keys.l?-1:keys.r?1:0;
+    if(target!=null){ d = Math.sign(target-px); if(Math.abs(target-px)<1.2){ px=target; target=null; d=0; const cb=onArrive; onArrive=null; if(cb) cb(); } }
+    if(d){ facing=d; px=Math.max(6,Math.min(W-6,px+d*1.2)); }
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ── dialog ──────────────────────────────────────────────
+let advance=null, menuSel=0, menuResolve=null, menuItems=[], typing=null;
+function setWho(name, sub){ $('who').innerHTML = name ? `${name}${sub?`<small>${sub}</small>`:""}` : ""; }
+function say(name, text, cls="", sub=""){
+  return new Promise(res=>{
+    setWho(name, sub); $('menu').innerHTML=""; const el=$('text'); el.className=cls; el.textContent="";
+    const full=text; let i=0; $('more').classList.remove('show');
+    typing = setInterval(()=>{ i+=2; el.textContent=full.slice(0,i); if(i>=full.length) done(); }, 22);
+    function done(){ clearInterval(typing); typing=null; el.textContent=full; $('more').classList.add('show'); advance=()=>{ advance=null; $('more').classList.remove('show'); res(); }; }
+    advance=()=>{ if(typing) done(); };
+  });
+}
+function choose(items, name="", text="", cls=""){
+  return new Promise(res=>{
+    setWho(name); $('text').className=cls; $('text').textContent=text; $('more').classList.remove('show');
+    menuItems=items; menuSel=0; menuResolve=res; renderMenu();
+  });
+}
+function renderMenu(){
+  $('menu').innerHTML = menuItems.map((it,i)=>`<li class="${i===menuSel?'on':''}" data-i="${i}"><span class="n">${i+1}</span>${it.l}${it.s?`<small>${it.s}</small>`:""}</li>`).join("");
+}
+function pickMenu(i){ if(!menuResolve) return; const r=menuResolve; menuResolve=null; $('menu').innerHTML=""; r(i); }
+function prompt(){ setWho(""); $('text').className="narr"; $('text').textContent=beat?beat.prompt:""; $('menu').innerHTML=""; $('more').classList.remove('show'); }
+function card(c1,c2){ const el=$('card'); el.querySelector('.c1').textContent=c1; el.querySelector('.c2').textContent=c2; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); return new Promise(r=>setTimeout(r,2400)); }
+
+// ── flow ────────────────────────────────────────────────
+async function title(){
+  mode="title"; beat=null; $('hud-c').textContent="";
+  await say("", "Year 1. The old rulers are gone.\nToday your valley decides what comes next.\n\nYou'll live through it as one of the family.", "narr");
+  pick();
+}
+let pickHover=null;
+async function pick(){
+  mode="pick"; pickFam=null; pickHover=null;
+  const fi = await choose(FAMILIES.map(f=>({l:`The ${f.surname}s`, s:f.landed?`own ${f.Fhold}`:`lease ${f.Fhold}`})), "", "Which family?", "narr");
+  pickFam = FAMILIES[fi];
+  state = newState(NATIONS[0], pickFam); state.m={...state.nation.base};
+  const mi = await choose(pickFam.members.map((m,i)=>({l:`${m.name}, ${m.age}`, s:`${RELATION[ROLES[i]]}. ${m.desc.split(/(?<=\.)\s/)[0]}`})), "", "Who are you?", "narr");
+  state.me = ROLES[mi]; pickHover=null;
+  $('hud-c').textContent = `${first(state.me).toUpperCase()} ${state.family.surname.toUpperCase()}`;
+  beatIdx=0; startBeat();
+}
+async function startBeat(){
+  beat = BEATS[beatIdx]; choiceMade=null; px=96; target=null; mode="walk"; busy=true;
+  $('text').textContent=""; setWho("");
+  await card(beat.time, beat.place);
+  for(const l of beat.intro) await say("", T(l), "narr");
+  await say(`${first(state.me)} (you)`, T(beat.think[state.me]), "think");
+  busy=false; prompt();
+}
+async function talk(h){
+  if(busy || choiceMade!=null) return;
+  busy=true; target=null; keys={};
+  if(h.kind==="fam"){
+    await say(first(h.r), T(beat.fam[h.r]), "", kin(h.r).toLowerCase());
+  } else {
+    const n=h.n;
+    for(let i=0;i<n.lines.length;i++) await say(n.name, T(n.lines[i]), "", i===0?n.sub:"");
+    const pick = await choose([{l:n.act}, {l:"Not yet. Keep looking"}], n.name, "", "");
+    if(pick===0){ await decide(n.c); return; }
+  }
+  busy=false; prompt();
+}
+async function decide(c){
+  choiceMade=c; state.answers[beat.qi]=c;
+  const ch=QUESTIONS[beat.qi].choices[c];
+  applyEffects(ch.e); state.nation.tags.forEach(t=>{ if(ch.g&&ch.g[t]) applyEffects(ch.g[t]); }); addFlags(ch.f);
+  await say("", beat.outcome || beat.outcomes[c], "narr");
+  const lines = beat.react[c].filter(([r])=>r!==state.me).slice(0,1);
+  for(const [r,l] of lines) await say(first(r), T(l), "", kin(r).toLowerCase());
+  await say("", "▸ "+T(ch.x), "echo");
+  beatIdx++;
+  if(beatIdx<BEATS.length) startBeat(); else night();
+}
+async function night(){
+  mode="night"; beat=null; busy=true;
+  await card("NIGHT","HOME");
+  await say(`${first(state.me)} (you)`, CLOSING[state.me], "think");
+  await say("What you set in motion", BEATS.map(b=>"▸ "+T(QUESTIONS[b.qi].choices[state.answers[b.qi]].x)).join("\n\n"), "echo");
+  await say("", "Year 8 comes next. The first bills come due.\n\nThis prototype stops here.", "narr");
+  const c = await choose([{l:"Play again as someone else"},{l:"Start over"}]);
+  if(c===0){ const fam=state.family; pickFam=fam; mode="pick";
+    const mi = await choose(fam.members.map((m,i)=>({l:`${m.name}, ${m.age}`, s:RELATION[ROLES[i]]})), "", "Who are you this time?", "narr");
+    state = newState(NATIONS[0], fam); state.m={...state.nation.base}; state.me=ROLES[mi];
+    $('hud-c').textContent = `${first(state.me).toUpperCase()} ${fam.surname.toUpperCase()}`;
+    beatIdx=0; startBeat();
+  } else title();
+}
+
+// ── input ───────────────────────────────────────────────
+function act(){
+  if(advance){ advance(); return; }
+  if(menuResolve){ pickMenu(menuSel); return; }
+  if(mode==="walk" && !busy){ const h=near(); if(h) talk(h); }
+}
+document.addEventListener('keydown', e=>{
+  if(menuResolve){
+    if(e.key==="ArrowDown"||e.key==="ArrowRight"){ menuSel=(menuSel+1)%menuItems.length; renderMenu(); e.preventDefault(); return; }
+    if(e.key==="ArrowUp"||e.key==="ArrowLeft"){ menuSel=(menuSel+menuItems.length-1)%menuItems.length; renderMenu(); e.preventDefault(); return; }
+    const n=parseInt(e.key); if(n>=1&&n<=menuItems.length){ pickMenu(n-1); return; }
+  }
+  if(e.key==="ArrowLeft"||e.key==="a"){ keys.l=true; target=null; e.preventDefault(); }
+  if(e.key==="ArrowRight"||e.key==="d"){ keys.r=true; target=null; e.preventDefault(); }
+  if(e.key==="Enter"||e.key===" "){ act(); e.preventDefault(); }
+});
+document.addEventListener('keyup', e=>{ if(e.key==="ArrowLeft"||e.key==="a") keys.l=false; if(e.key==="ArrowRight"||e.key==="d") keys.r=false; });
+$('box').addEventListener('click', e=>{ const li=e.target.closest('li'); if(li){ pickMenu(+li.dataset.i); return; } act(); });
+$('stage').addEventListener('click', e=>{
+  if(advance){ advance(); return; }
+  if(mode!=="walk" || busy || choiceMade!=null) return;
+  const st=$('stage').getBoundingClientRect(), x=(e.clientX-st.left)/st.width*W;
+  const h = hotspots().filter(h=>Math.abs(h.x-x)<10).sort((a,b)=>Math.abs(a.x-x)-Math.abs(b.x-x))[0];
+  target = h ? h.x : Math.max(6,Math.min(W-6,x));
+  onArrive = h ? ()=>talk(h) : null;
+});
+$('pad').querySelectorAll('button').forEach(b=>{
+  const d=+b.dataset.d;
+  if(d===0){ b.addEventListener('click', act); return; }
+  const k = d<0?'l':'r';
+  b.addEventListener('pointerdown', e=>{ e.preventDefault(); keys[k]=true; target=null; });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev, ()=>keys[k]=false));
+});
+$('btn-restart').addEventListener('click', ()=>{ if(confirm("Start over?")) location.reload(); });
+
+requestAnimationFrame(loop);
+title();
+</script>
+</body>
+</html>

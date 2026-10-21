@@ -6,7 +6,7 @@
 // the save that won.
 (function () {
   var OLD_HOST = 'nation-builders.netlify.app';
-  var NEW_URL = 'https://fun-time-studio.netlify.app/nation-builders/';
+  var NEW_URL = 'https://funtime-studio.com/nation-builders/';
   var SAVE_KEY = 'nation-builder:tabletop:v1';
   var EXTRA_KEYS = ['nb-tt-sound'];   // kept only where the new address has none
   // Which game in progress to keep: the one played most recently.
